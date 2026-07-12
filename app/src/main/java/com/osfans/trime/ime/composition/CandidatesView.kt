@@ -29,6 +29,7 @@ import com.osfans.trime.ime.candidates.popup.PagedCandidatesUi
 import com.osfans.trime.ime.core.BaseInputView
 import com.osfans.trime.ime.core.TouchEventReceiverWindow
 import com.osfans.trime.ime.core.TrimeInputMethodService
+import com.osfans.trime.ime.keyboard.T9CorrectionState
 import splitties.dimensions.dp
 import splitties.views.dsl.constraintlayout.below
 import splitties.views.dsl.constraintlayout.bottomOfParent
@@ -92,6 +93,7 @@ class CandidatesView(
             scope,
             setupPreeditView = { setPaddingDp(3, 1, 3, 1) },
             onMoveCursor = { pos -> rime.launchOnReady { it.moveCursorPos(pos) } },
+            onDragLetter = { offset, forward -> T9CorrectionState.correctLetter(rime, composition, offset, forward) },
         )
 
     private val candidatesUi =
@@ -113,11 +115,21 @@ class CandidatesView(
             is RimeMessage.CompositionMessage -> {
                 composition = it.data
                 updateUi()
+                // user backed all the way out of a word they were correcting: go back
+                // to fast T9 typing instead of staying stuck on the letter schema.
+                if (T9CorrectionState.active && composition.length == 0) {
+                    T9CorrectionState.restoreT9Schema(rime)
+                }
             }
 
             is RimeMessage.PagedCandidatesMessage -> {
                 candidates = it.data
                 updateUi()
+            }
+            is RimeMessage.CommitTextMessage -> {
+                if (T9CorrectionState.active) {
+                    T9CorrectionState.restoreT9Schema(rime)
+                }
             }
 
             else -> {}

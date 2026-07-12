@@ -372,6 +372,10 @@ class KeyboardWindow(di: DI) :
     }
 
     override fun onRimeSchemaUpdated(schema: SchemaItem) {
+        if (T9CorrectionState.suppressNextKeyboardSwitch) {
+            T9CorrectionState.suppressNextKeyboardSwitch = false
+            return
+        }
         switchKeyboard(".default")
     }
 

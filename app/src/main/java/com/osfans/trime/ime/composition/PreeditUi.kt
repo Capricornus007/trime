@@ -26,6 +26,7 @@ open class PreeditUi(
     private val scope: ThemeScope,
     private val setupPreeditView: (TextView.() -> Unit)? = null,
     private val onMoveCursor: ((Int) -> Unit)? = null,
+    private val onDragLetter: ((offset: Int, forward: Boolean) -> Unit)? = null,
 ) : Ui {
     private val theme: Theme
         get() = scope.theme
@@ -41,6 +42,7 @@ open class PreeditUi(
             typeface = theme.fonts.text
             setupPreeditView?.invoke(this)
             onMoveCursor = this@PreeditUi.onMoveCursor
+            onDragLetter = this@PreeditUi.onDragLetter
         }
 
     override val root =
