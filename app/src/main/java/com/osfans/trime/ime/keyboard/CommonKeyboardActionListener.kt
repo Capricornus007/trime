@@ -194,7 +194,35 @@ class CommonKeyboardActionListener(override val di: DI) : DIAware {
                     "select_candidate" -> handleSelectCandidate(arg)
                     "switch_hide_key_symbol" -> switchHideKeySymbol()
                     "switch_hide_key_hint" -> switchHideKeyHint()
+                    "select_schema" -> handleSelectSchema(arg)
+                    "t9_pick_letter" -> handlePickLetter(arg)
                     else -> handleIntentAction(action.command, arg)
+                }
+            }
+
+            // trime-9key: the user picked an exact letter on a T9 digit key
+            // (hold GHI: drag left/release/right = g/h/i). The letter always
+            // joins the pinyin composition -- correcting the word's
+            // ambiguous letter (hao -> gao), starting a fresh composition,
+            // or appending -- never committing as bare text.
+            private fun handlePickLetter(arg: String) {
+                val letter = arg.firstOrNull()?.lowercaseChar() ?: return
+                if (!T9CorrectionState.pickLetter(rime, letter)) {
+                    service.commitText(letter.toString())
+                }
+            }
+
+            // trime-9key: switch the active Rime schema by id (e.g. between the
+            // qwerty pinyin schema `luna_pinyin` and the 9-key `t9_pinyin`).
+            // The keyboard layout follows automatically: selecting a schema fires
+            // onRimeSchemaUpdated -> switchKeyboard(".default") -> smartMatchKeyboard(),
+            // which picks the preset keyboard whose id equals the schema id.
+            private fun handleSelectSchema(schemaId: String) {
+                if (schemaId.isEmpty()) return
+                rime.launchOnReady { api ->
+                    service.lifecycleScope.launch {
+                        api.selectSchema(schemaId)
+                    }
                 }
             }
 

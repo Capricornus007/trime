@@ -45,6 +45,13 @@ style:
   preview_height: 60 #按鍵提示高度
   preview_offset: -12 #按鍵提示縱向偏移
   preview_text_size: 40 #按鍵提示字號
+  # trime-9key：手勢預覽氣泡尺寸。代碼裡這幾項（含 popup_text_size）默認
+  # 為 0，不寫的話所有按鍵氣泡（滑動/長按提示）都會以 0x0 渲染或文字不可見。
+  popup_width: 52 #手勢預覽氣泡寬
+  popup_height: 60 #手勢預覽氣泡高
+  popup_key_height: 48 #彈出鍵盤鍵高
+  popup_bottom_margin: 6 #氣泡與按鍵的間距
+  popup_text_size: 26 #氣泡字號
   reset_ascii_mode_on_focus_change: false #焦点变更弹起输入法软键盘时，重置 ascii_mode
   round_corner: 8 #按鍵圓角半徑
   shadow_radius: 0.0 #按鍵陰影半徑
@@ -931,6 +938,34 @@ preset_keys:
   clipboard_window: { label: "剪贴", send: FUNCTION, command: "clipboard_window", option: '0' } #0剪贴板，1收藏夹
   set_color_ink: { label: 切换到ink配色, send: FUNCTION, command: set_color_scheme, option: "ink" }
   set_theme_ink: { label: 切换到ink主题, send: FUNCTION, command: set_theme, option: "ink" } #空参数为刷新主题
+  # trime-9key：九宮格精確選字母（搬自 lida0407）。數字鍵左滑／原地長按／右滑
+  # 分別送出該鍵左／中／右字母（四字母鍵加上滑），處理見 t9_pick_letter。
+  t9_pick_a: {label: a, send: function, command: t9_pick_letter, option: a}
+  t9_pick_b: {label: b, send: function, command: t9_pick_letter, option: b}
+  t9_pick_c: {label: c, send: function, command: t9_pick_letter, option: c}
+  t9_pick_d: {label: d, send: function, command: t9_pick_letter, option: d}
+  t9_pick_e: {label: e, send: function, command: t9_pick_letter, option: e}
+  t9_pick_f: {label: f, send: function, command: t9_pick_letter, option: f}
+  t9_pick_g: {label: g, send: function, command: t9_pick_letter, option: g}
+  t9_pick_h: {label: h, send: function, command: t9_pick_letter, option: h}
+  t9_pick_i: {label: i, send: function, command: t9_pick_letter, option: i}
+  t9_pick_j: {label: j, send: function, command: t9_pick_letter, option: j}
+  t9_pick_k: {label: k, send: function, command: t9_pick_letter, option: k}
+  t9_pick_l: {label: l, send: function, command: t9_pick_letter, option: l}
+  t9_pick_m: {label: m, send: function, command: t9_pick_letter, option: m}
+  t9_pick_n: {label: n, send: function, command: t9_pick_letter, option: n}
+  t9_pick_o: {label: o, send: function, command: t9_pick_letter, option: o}
+  t9_pick_p: {label: p, send: function, command: t9_pick_letter, option: p}
+  t9_pick_q: {label: q, send: function, command: t9_pick_letter, option: q}
+  t9_pick_r: {label: r, send: function, command: t9_pick_letter, option: r}
+  t9_pick_s: {label: s, send: function, command: t9_pick_letter, option: s}
+  t9_pick_t: {label: t, send: function, command: t9_pick_letter, option: t}
+  t9_pick_u: {label: u, send: function, command: t9_pick_letter, option: u}
+  t9_pick_v: {label: v, send: function, command: t9_pick_letter, option: v}
+  t9_pick_w: {label: w, send: function, command: t9_pick_letter, option: w}
+  t9_pick_x: {label: x, send: function, command: t9_pick_letter, option: x}
+  t9_pick_y: {label: y, send: function, command: t9_pick_letter, option: y}
+  t9_pick_z: {label: z, send: function, command: t9_pick_letter, option: z}
   # trime設定
   IME_switch: { label: 🌐, send: LANGUAGE_SWITCH } #彈出對話框選擇輸入法
   IME_last: { label: 上一輸入法, send: LANGUAGE_SWITCH, select: .last } #直接切換到上一輸入法
@@ -1236,16 +1271,16 @@ preset_keyboards:
     #   數字      符號    空格0    回车
     keys:
     - {label: '，。？！', click: ',', long_click: '。', swipe_up: '？', swipe_down: '！', swipe_left: '@', swipe_right: '、', key_text_size: 16}
-    - {label: ABC, click: '2'}
-    - {label: DEF, click: '3'}
+    - {label: ABC, click: '2', swipe_left: t9_pick_a, long_click: t9_pick_b, swipe_right: t9_pick_c}
+    - {label: DEF, click: '3', swipe_left: t9_pick_d, long_click: t9_pick_e, swipe_right: t9_pick_f}
     - {click: BackSpace, long_click: Escape}
-    - {label: GHI, click: '4'}
-    - {label: JKL, click: '5'}
-    - {label: MNO, click: '6'}
+    - {label: GHI, click: '4', swipe_left: t9_pick_g, long_click: t9_pick_h, swipe_right: t9_pick_i}
+    - {label: JKL, click: '5', swipe_left: t9_pick_j, long_click: t9_pick_k, swipe_right: t9_pick_l}
+    - {label: MNO, click: '6', swipe_left: t9_pick_m, long_click: t9_pick_n, swipe_right: t9_pick_o}
     - {click: liquid_keyboard_emoji, long_click: "'"}
-    - {label: PQRS, click: '7'}
-    - {label: TUV, click: '8'}
-    - {label: WXYZ, click: '9'}
+    - {label: PQRS, click: '7', swipe_left: t9_pick_p, swipe_up: t9_pick_q, long_click: t9_pick_r, swipe_right: t9_pick_s}
+    - {label: TUV, click: '8', swipe_left: t9_pick_t, long_click: t9_pick_u, swipe_right: t9_pick_v}
+    - {label: WXYZ, click: '9', swipe_left: t9_pick_w, swipe_up: t9_pick_x, long_click: t9_pick_y, swipe_right: t9_pick_z}
     - {click: Mode_switch, long_click: Menu}
     - {click: Keyboard_number}
     - {click: Keyboard_symbols}

@@ -92,17 +92,13 @@ class PreeditDelegate(override val di: DI) :
 
     override fun onCompositionUpdate(data: CompositionProto) {
         composition = data
+        T9CorrectionState.onComposition(rime, data)
         ui.update(data)
         ui.root.visibility = if (ui.visible) View.VISIBLE else View.INVISIBLE
         if (data.length > 0) {
             touchEventReceiverWindow.show()
         } else {
             touchEventReceiverWindow.dismiss()
-        }
-        // every commit clears composition, so this alone catches both
-        // "committed a corrected word" and "backed all the way out of it".
-        if (T9CorrectionState.active && data.length == 0) {
-            T9CorrectionState.restoreT9Schema(rime)
         }
     }
 }
