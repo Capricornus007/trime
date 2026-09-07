@@ -116,9 +116,18 @@ class KeyView(
                         val actionBehavior = if (pressedIdx != -1 && pressedIdx != id) KeyBehavior.COMBO else behavior
                         key.getAction(actionBehavior)?.let { processKeyAction(it, actionBehavior) }
                     }
-
-                    KeyBehavior.DOUBLE_CLICK, KeyBehavior.LAZY_DOUBLE_CLICK,
                     KeyBehavior.SWIPE_UP, KeyBehavior.SWIPE_DOWN, KeyBehavior.SWIPE_LEFT, KeyBehavior.SWIPE_RIGHT,
+                    -> {
+                        // trime-9key: a fast tap that drifts past the swipe
+                        // threshold in a direction this key doesn't bind used
+                        // to dispatch nothing at all -- the keystroke silently
+                        // vanished. Fall back to the key's normal click, which
+                        // is what such a sloppy tap meant.
+                        val action = key.getAction(behavior) ?: key.getAction(KeyBehavior.CLICK)
+                        val effective = if (key.getAction(behavior) != null) behavior else KeyBehavior.CLICK
+                        action?.let { processKeyAction(it, effective) }
+                    }
+                    KeyBehavior.DOUBLE_CLICK, KeyBehavior.LAZY_DOUBLE_CLICK,
                     ->
                         key.getAction(behavior)?.let { processKeyAction(it, behavior) }
 
