@@ -1,0 +1,34 @@
+# Rime dictionary
+# encoding: utf-8
+#
+# SPDX-FileCopyrightText: 2026 iDvel and rime-ice contributors (原稿)
+# SPDX-FileCopyrightText: 2026 Capricornus007 (本檔的改寫)
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# 九鍵（t9_pinyin 方案）用的詞典。
+#
+# **為什麼預設匯入 luna_pinyin 而不是 rime-ice 那套 cn_dicts**：
+#   1. 上游 Trime 已經帶 luna_pinyin（app/data/rime/luna-pinyin 子模組）與 essay.txt
+#      詞頻，不需要再多塞 46MB 文字檔（原稿那五張表：base 16.6M＋ext 11.9M＋
+#      tencent 17.4M＋8105 115K＋others 17K），APK 與首次部署都會胖一圈。
+#   2. 這個專案的硬需求是「使用者自己那份 PC↔手機通用的 rime 配置要能直接用」，
+#      而使用者那份的詞典鏈就是 luna_pinyin 系（含他自己的 *.custom.yaml、
+#      luna_pinyin.extended.dict.yaml 與 userdb）。預設指向它，九鍵才吃得到
+#      他已經累積的詞頻與打字習慣。
+#   3. 九鍵的候選品質取決於詞頻（數字序列要還原成哪個字母，靠的就是詞頻排序），
+#      所以要換更大的詞庫時**換這裡一行就好**，不要改 schema：
+#      把下面的 import_tables 改成自己要的表（例如把 rime-ice 的 cn_dicts/ 放進
+#      同一個 shared 目錄後寫 `- cn_dicts/base`），或直接在
+#      t9_dict.custom.yaml 裡 patch import_tables。
+#
+# 注意：t9 的 speller/algebra 在 t9_pinyin.schema.yaml 裡，它假設詞典的「讀音」是
+# 標準拼音音節；換詞典時若讀音欄位不是拼音（例如倉頡、雙拼），消歧會失效。
+
+---
+name: t9_dict
+version: "2026-07-12"
+sort: by_weight
+use_preset_vocabulary: true
+import_tables:
+  - luna_pinyin
+...
