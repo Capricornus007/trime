@@ -22,7 +22,12 @@ android {
     buildToolsVersion = "36.0.0"
 
     defaultConfig {
-        applicationId = "com.osfans.trime"
+        // 使用者一貫規則（三次前例：MapAdKiller「包名加爲 io.github.我的githubid」09-19、
+        // metube「把包名改成我的」10-12、u1s1「改成 u1s1-cn-bin」10-21）＋ 本次明令
+        // 「我說 org.capricornus007.trime」：名字就叫 Trime，但身份走自己的帳號命名空間，
+        // 不佔上游的 com.osfans.trime（否則手機上兩支同包名、憑證不同，install -r 直接
+        // INSTALL_FAILED_UPDATE_INCOMPATIBLE，而且上游一更新就把我們這支蓋掉）。
+        applicationId = "org.capricornus007.trime"
         minSdk = 21
         targetSdk = 37
         versionCode = 20261101
