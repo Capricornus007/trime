@@ -42,8 +42,6 @@ class SetupActivity : FragmentActivity() {
     private lateinit var prevButton: Button
     private lateinit var nextButton: Button
 
-
-
     fun refreshCurrentFragment() {
         val fragment = supportFragmentManager.findFragmentByTag("f${viewPager.currentItem}")
         (fragment as? SetupFragment)?.sync()

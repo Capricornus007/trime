@@ -39,7 +39,6 @@ class SetupFragment : Fragment() {
     fun sync() {
         val done = page.isDone()
         with(binding) {
-
             stepText.text = page.getStepText(requireContext())
             hintText.text = page.getHintText(requireContext())
             val showActionButton = !done && page.showActionButton()
