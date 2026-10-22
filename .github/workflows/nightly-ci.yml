@@ -12,7 +12,9 @@ env:
   CI_NAME: Nightly CI
 jobs:
   build:
-    if: ${{ github.repository == 'osfans/trime' && github.ref == 'refs/heads/develop' }}
+    # 上游鎖死只給 osfans/trime；這支 fork 要每天有能裝的包（九鍵的實測包就靠它），
+    # 所以把自己的倉加進白名單，條件其餘照上游。
+    if: ${{ (github.repository == 'osfans/trime' || github.repository == 'Capricornus007/trime') && github.ref == 'refs/heads/develop' }}
     runs-on: ubuntu-26.04
     steps:
       - name: Checkout
@@ -61,6 +63,13 @@ jobs:
 
       - name: Build Trime
         run: make release
+
+      # 同 release-ci：驗產物不驗配置（規則 71）。nightly 也會發佈到 releases，
+      # 未簽名的包一旦上線，手機上那支就再也升級不了（指紋不同）。
+      - name: Verify APK signing
+        uses: ./.github/actions/verify-apk-signing
+        with:
+          keystore-password: ${{ secrets.KEY_STORE_PASSWORD }}
 
       - name: Add JNI cache
         if: ${{ !steps.jni-cache.outputs.cache-hit }}

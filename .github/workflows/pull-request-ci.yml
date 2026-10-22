@@ -12,6 +12,11 @@ on:
       # pull request's head branch was updated
       - synchronize
 
+# PR 連續推交只留最後一發（matrix 是 4 個 OS 的原生編譯，排队沒有資訊價值）
+concurrency:
+  group: pr-ci-${{ github.event.pull_request.number }}-${{ github.workflow }}
+  cancel-in-progress: true
+
 env:
   CI_NAME: Pull Request CI
 jobs:

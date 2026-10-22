@@ -1,0 +1,59 @@
+# SPDX-FileCopyrightText: 2026 Capricornus007
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+name: Verify APK signing
+description: 驗「公開發布的那個 APK」本身有沒有 v1+v2+v3、憑證是不是我們那把金鑰
+
+inputs:
+  apk-dir:
+    description: 放 release APK 的目錄
+    required: true
+    default: app/build/outputs/apk/release
+  keystore-properties:
+    description: keystore.properties 路徑（裡面是 keyBase64 那把正式金鑰）
+    required: true
+    default: keystore.properties
+  keystore-password:
+    # composite action 讀不到 secrets context（GitHub 的設計），只能由呼叫端當 input 傳進來。
+    description: KEY_STORE_PASSWORD 的值，由呼叫端從 secrets 傳入
+    required: true
+
+runs:
+  using: composite
+  steps:
+    # 存在的理由：DSL 讀 keystore.properties 的簽名块一旦被覆寫，Gradle 會「安靜地」
+    # 不套任何簽名（或退回 runner 隨機 debug 金鑰），CI 照綠、發布說明照寫已簽名——
+    # moregramX 就這樣讓一整月的正式版完全沒簽。所以收口要驗產物，不驗配置。
+    # 指紋是從金鑰反算再跟 APK 對照，這樣「有簽但簽錯鑰」也會紅。
+    - name: Run apksigner checks
+      shell: bash
+      env:
+        APK_DIR: ${{ inputs.apk-dir }}
+        KS_PROPS: ${{ inputs.keystore-properties }}
+        KS_PASS: ${{ inputs.keystore-password }}
+      run: |
+        set -euo pipefail
+        mapfile -t APKS < <(find "$APK_DIR" -maxdepth 1 -name '*.apk' | sort)
+        (( ${#APKS[@]} > 0 )) || { echo "::error::$APK_DIR 裡沒有任何 APK"; exit 1; }
+        APKSIGNER="$(find "$ANDROID_HOME/build-tools" -maxdepth 2 -type f -name apksigner | sort -V | tail -1)"
+        [[ -n "$APKSIGNER" ]] || { echo "::error::找不到 apksigner"; exit 1; }
+        sed -n 's/^keyBase64=//p' "$KS_PROPS" | base64 -d > /tmp/expected.ks
+        WANT="$(keytool -list -v -keystore /tmp/expected.ks -storepass:env KS_PASS \
+                | sed -n 's/^[[:space:]]*SHA256:[[:space:]]*//p' | head -1 | tr -d ':' | tr 'A-F' 'a-f')"
+        [[ ${#WANT} -eq 64 ]] || { echo "::error::算不出期望憑證指紋"; exit 1; }
+        for apk in "${APKS[@]}"; do
+          echo "=== $apk ==="
+          # --min-sdk-version 21 不可省：包的 minSdk≥24 時 apksigner 會跳過 v1 檢查直接回 false，
+          # 那是最容易把好包誤判成壞包的地方。
+          OUT="$("$APKSIGNER" verify -v --min-sdk-version 21 "$apk")"
+          printf '%s\n' "$OUT"
+          for s in v1 v2 v3; do
+            printf '%s\n' "$OUT" | grep -q "Verified using $s scheme.*: true" \
+              || { echo "::error::$apk 缺 $s 簽名區塊"; exit 1; }
+          done
+          GOT="$("$APKSIGNER" verify --print-certs "$apk" | sed -n 's/^Signer #1 certificate SHA-256 digest: //p' | tr -d ':' | tr 'A-F' 'a-f')"
+          [[ "$GOT" == "$WANT" ]] \
+            || { echo "::error::$apk 憑證不符（期望 $WANT／實際 $GOT）＝簽名退回 debug 金鑰"; exit 1; }
+          echo "OK：v1+v2+v3，指紋 $GOT"
+        done
