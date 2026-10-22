@@ -52,7 +52,12 @@ runs:
             printf '%s\n' "$OUT" | grep -q "Verified using $s scheme.*: true" \
               || { echo "::error::$apk 缺 $s 簽名區塊"; exit 1; }
           done
-          GOT="$("$APKSIGNER" verify --print-certs "$apk" | sed -n 's/^Signer #1 certificate SHA-256 digest: //p' | tr -d ':' | tr 'A-F' 'a-f')"
+          # 這臺 build-tools 37 的 apksigner 印的是「V2 Signer: certificate SHA-256 digest: …」，
+          # 舊寫法「Signer #1 …」是別的版本的字樣，對不上就會拿到空字串、把簽好的包判成壞包
+          # （nightly 39740420596 就是这样紅的：v1/v2/v3 三關全過，死在指紋解析）。
+          GOT="$("$APKSIGNER" verify --print-certs "$apk" \
+                | grep -m1 'certificate SHA-256 digest' \
+                | sed 's/.*digest:[[:space:]]*//' | tr -d ':' | tr 'A-F' 'a-f')"
           [[ "$GOT" == "$WANT" ]] \
             || { echo "::error::$apk 憑證不符（期望 $WANT／實際 $GOT）＝簽名退回 debug 金鑰"; exit 1; }
           echo "OK：v1+v2+v3，指紋 $GOT"
