@@ -8,6 +8,11 @@ on:
   schedule:
     - cron: '0 16 * * *' # UTC 16:00 / GMT+8 0:00, daily
 
+# 倉是用 API 建的，GITHUB_TOKEN 預設只有讀權限：softprops/action-gh-release 發 release 會 403，
+# 表現是「Build Trime 全綠、Verify APK signing 全綠、Create Release 紅」（實測 nightly 39742953570）。
+permissions:
+  contents: write
+
 env:
   CI_NAME: Nightly CI
 jobs:
