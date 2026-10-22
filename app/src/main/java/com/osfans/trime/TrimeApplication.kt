@@ -88,24 +88,26 @@ class TrimeApplication : Application() {
         }
 
     /**
-     * Rime 的 `shared/` 與 `rime/` 都掛在這個目錄底下。
+     * Rime 的 `shared/` 與 `rime/` 都掛在這個目錄底下：**固定是公共目錄
+     * `<外部儲存根目錄>/Rime`**（實測 `/sdcard/Rime` = `/storage/emulated/0/Rime`），
+     * **沒有退回應用專用目錄這回事**。
      *
-     * **公共目錄優先、裝好就用，不再讓向導問「存哪裡」**：預設直接落到
-     * `<外部儲存根目錄>/Rime`（實測路徑 `/sdcard/Rime` = `/storage/emulated/0/Rime`），
-     * 這樣使用者那份 PC↔手機共用的 rime 配置用一般檔案管理員就碰得到。
-     * 順帶避開裝置側的坑：實測這臺 realme 的 `StorageManager.mkdirs` 建不出
-     * `Android/data/<包>/files`（`DataManager.copyFile → getExternalFilesDir` 拋
-     * RemoteException，最後 `System.exit(10)`），首啟就當機。
-     * 寫公共目錄需要 All files access；拿不到時退回應用專用目錄而不是崩掉。
+     * 為什麼不退回：退回會造成「同一份 rime 配置存在兩個地方」的分裂狀態——
+     * 使用者那份 PC↔手機通用的配置、userdb、自訂方案就不知道该認哪一處，
+     * 而且換目錄時看起來像資料掉了。寫不進去就明確報錯並去要
+     * All files access（見 SetupActivity.askAllFilesAccess），不是偷偷換地方。
+     *
+     * 順帶：這也避開裝置側的坑——實測這臺 realme 的 `StorageManager.mkdirs`
+     * 建不出 `Android/data/<包>/files`，原本 `DataManager.copyFile →
+     * getExternalFilesDir` 對它是硬依賴，首啟直接 `System.exit(10)`。
      */
     val externalFilesDir: File
-        get() = with(directBootAwareContext) {
-            val public = File(Environment.getExternalStorageDirectory(), PUBLIC_RIME_DIR_NAME)
-            if (runCatching { public.mkdirs() && public.canWrite() }.getOrDefault(false)) {
-                return@with public
+        get() = File(Environment.getExternalStorageDirectory(), PUBLIC_RIME_DIR_NAME).also { dir ->
+            if (!dir.isDirectory && !runCatching { dir.mkdirs() }.getOrDefault(false)) {
+                Timber.e("建不出 Rime 資料目錄 ${dir.path}：需要 All files access（MANAGE_EXTERNAL_STORAGE）")
+            } else if (!dir.canWrite()) {
+                Timber.e("Rime 資料目錄 ${dir.path} 不可寫：需要 All files access（MANAGE_EXTERNAL_STORAGE）")
             }
-            Timber.w("公共目錄 ${public.path} 不可寫（沒有 All files access？），退回應用專用目錄")
-            getExternalFilesDir(null) ?: filesDir
         }
 
     override fun onCreate() {
