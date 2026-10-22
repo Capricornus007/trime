@@ -12,6 +12,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.res.Configuration
 import android.os.Build
+import android.os.Environment
 import android.os.Process
 import android.util.Log
 import androidx.core.content.ContextCompat
@@ -86,8 +87,24 @@ class TrimeApplication : Application() {
             applicationContext
         }
 
+    /**
+     * Rime 的 `shared/` 與 `rime/` 都掛在這個目錄底下。
+     *
+     * **公共目錄優先、裝好就用，不再讓向導問「存哪裡」**：預設直接落到
+     * `<外部儲存根目錄>/Rime`（實測路徑 `/sdcard/Rime` = `/storage/emulated/0/Rime`），
+     * 這樣使用者那份 PC↔手機共用的 rime 配置用一般檔案管理員就碰得到。
+     * 順帶避開裝置側的坑：實測這臺 realme 的 `StorageManager.mkdirs` 建不出
+     * `Android/data/<包>/files`（`DataManager.copyFile → getExternalFilesDir` 拋
+     * RemoteException，最後 `System.exit(10)`），首啟就當機。
+     * 寫公共目錄需要 All files access；拿不到時退回應用專用目錄而不是崩掉。
+     */
     val externalFilesDir: File
         get() = with(directBootAwareContext) {
+            val public = File(Environment.getExternalStorageDirectory(), PUBLIC_RIME_DIR_NAME)
+            if (runCatching { public.mkdirs() && public.canWrite() }.getOrDefault(false)) {
+                return@with public
+            }
+            Timber.w("公共目錄 ${public.path} 不可寫（沒有 All files access？），退回應用專用目錄")
             getExternalFilesDir(null) ?: filesDir
         }
 
@@ -210,6 +227,12 @@ class TrimeApplication : Application() {
     }
 
     companion object {
+        /** 公共目錄裡那個資料夾的名字（大小寫隨意，這裡跟 librime 慣例一致用 `Rime`）。 */
+        const val PUBLIC_RIME_DIR_NAME = "Rime"
+
+        /** 讓使用者把 Rime 資料改放公共目錄（例 `/sdcard/Rime`）的偏好鍵，見 [externalFilesDir]。 */
+        const val RIME_DIR_PREF = "general_rime_dir"
+
         private var instance: TrimeApplication? = null
         private var lastPid: Int? = null
 

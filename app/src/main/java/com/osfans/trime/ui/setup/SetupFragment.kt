@@ -12,7 +12,6 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import com.osfans.trime.R
 import com.osfans.trime.data.prefs.AppPrefs
-import com.osfans.trime.data.sync.DataStorageMode
 import com.osfans.trime.data.sync.RimeDataSync
 import com.osfans.trime.databinding.FragmentSetupBinding
 import com.osfans.trime.util.serializable
@@ -29,22 +28,9 @@ class SetupFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?,
     ): View {
-        binding = FragmentSetupBinding.inflate(inflater).apply {
-            storageModeOptions.setOnCheckedChangeListener { _, checkedId ->
-                val oldMode = prefs.dataStorageMode.getValue()
-                val newMode = when (checkedId) {
-                    R.id.sync_from_external_option -> DataStorageMode.EXTERNAL_SYNC
-                    R.id.app_specific_storage_option -> DataStorageMode.APP_STORAGE
-                    else -> return@setOnCheckedChangeListener
-                }
-                RimeDataSync.onStorageModeChanged(oldMode, newMode)
-                prefs.dataStorageMode.setValue(newMode)
-                sync()
-                (requireActivity() as SetupActivity).updateButtons()
-            }
-            syncFromExternalDesc.setOnClickListener { syncFromExternalOption.isChecked = true }
-            appSpecificStorageDesc.setOnClickListener { appSpecificStorageOption.isChecked = true }
-        }
+        // 向導不再問「Rime 資料存哪裡」：資料目錄由 TrimeApplication.externalFilesDir
+        // 直接定成公共目錄（<外部儲存根>/Rime），首啟自動去要 All files access。
+        binding = FragmentSetupBinding.inflate(inflater)
         sync()
         return binding.root
     }
@@ -52,14 +38,7 @@ class SetupFragment : Fragment() {
     // Called on window focus changed
     fun sync() {
         val done = page.isDone()
-        val isStorageModePage = page == SetupPage.Mode
-        val checkedId = when (prefs.dataStorageMode.getValue()) {
-            DataStorageMode.EXTERNAL_SYNC -> R.id.sync_from_external_option
-            DataStorageMode.APP_STORAGE -> R.id.app_specific_storage_option
-        }
         with(binding) {
-            storageModeOptions.visibility = if (isStorageModePage) View.VISIBLE else View.GONE
-            storageModeOptions.check(checkedId)
 
             stepText.text = page.getStepText(requireContext())
             hintText.text = page.getHintText(requireContext())

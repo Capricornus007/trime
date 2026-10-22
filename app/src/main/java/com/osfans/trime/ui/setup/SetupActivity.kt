@@ -7,8 +7,11 @@ package com.osfans.trime.ui.setup
 
 import android.app.PendingIntent
 import android.content.Intent
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
-import android.view.View
+import android.os.Environment
+import android.provider.Settings
 import android.widget.Button
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AlertDialog
@@ -19,11 +22,9 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isGone
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
-import androidx.lifecycle.lifecycleScope
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
 import com.osfans.trime.R
-import com.osfans.trime.data.sync.RimeDataSync
 import com.osfans.trime.databinding.ActivitySetupBinding
 import com.osfans.trime.ui.main.MainActivity
 import com.osfans.trime.ui.setup.SetupPage.Companion.firstUndonePage
@@ -31,12 +32,8 @@ import com.osfans.trime.ui.setup.SetupPage.Companion.isLastPage
 import com.osfans.trime.util.appContext
 import com.osfans.trime.util.createNotificationChannel
 import com.osfans.trime.util.startActivity
-import com.osfans.trime.util.toast
-import io.github.whiredplanck.storageaccess.StorageAccess
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import splitties.systemservices.notificationManager
+import timber.log.Timber
 
 class SetupActivity : FragmentActivity() {
     private lateinit var viewPager: ViewPager2
@@ -45,29 +42,7 @@ class SetupActivity : FragmentActivity() {
     private lateinit var prevButton: Button
     private lateinit var nextButton: Button
 
-    private val storageAccess = StorageAccess(this)
 
-    fun pickDataPath() {
-        lifecycleScope.launch {
-            val picked = storageAccess.pickDirectory() ?: return@launch
-            runCatching {
-                withContext(Dispatchers.IO) {
-                    RimeDataSync.persistTreeUri(picked.uri)
-                    RimeDataSync.importToLocal().getOrThrow()
-                }
-                refreshCurrentFragment()
-                updateButtons()
-                toast(R.string.setup__data_path_imported)
-                skipButton.visibility = View.VISIBLE
-            }.onFailure {
-                // Keep the picked folder: the user is not forced to pick again, and a folder that
-                // keeps failing makes the deploy path fall back to app-specific storage on its own.
-                refreshCurrentFragment()
-                updateButtons()
-                toast(R.string.setup__data_path_import_failed)
-            }
-        }
-    }
 
     fun refreshCurrentFragment() {
         val fragment = supportFragmentManager.findFragmentByTag("f${viewPager.currentItem}")
@@ -87,8 +62,32 @@ class SetupActivity : FragmentActivity() {
         fun shouldShowUp() = !shown && SetupPage.hasUndonePage()
     }
 
+    /**
+     * 首啟自己去要「所有檔案存取權」（All files access）。
+     *
+     * Rime 的資料目錄現在預設落在公共的 `<外部儲存根>/Rime`（見
+     * TrimeApplication.externalFilesDir），Android 11 起那需要 MANAGE_EXTERNAL_STORAGE；
+     * 系統不允許應用自行授予，所以這裡直接跳到該應用的那個設定頁，使用者按一次「允許」就好。
+     * 已有權限、或裝置不支援（Android 10 以下走舊的 WRITE_EXTERNAL_STORAGE 流程）就什麼都不做。
+     */
+    private fun askAllFilesAccess() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return
+        if (Environment.isExternalStorageManager()) return
+        runCatching {
+            startActivity(
+                Intent(
+                    Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
+                    Uri.parse("package:$packageName"),
+                ),
+            )
+        }.onFailure {
+            Timber.w(it, "跳不到 All files access 設定頁；資料目錄會退回應用專用目錄")
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        askAllFilesAccess()
         enableEdgeToEdge()
         val binding = ActivitySetupBinding.inflate(layoutInflater)
         ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, windowInsets ->
@@ -148,7 +147,7 @@ class SetupActivity : FragmentActivity() {
 
     fun updateButtons() {
         val allDone = !SetupPage.hasUndonePage()
-        val modeSetupDone = SetupPage.Mode.isDone()
+        val modeSetupDone = true
         val isFirstPage = viewPager.currentItem == 0
         val isLastPage = viewPager.currentItem.isLastPage()
 

@@ -52,8 +52,11 @@
         app:layout_constraintTop_toBottomOf="@id/step_text"
         tools:text="Hint text here ..." />
 
+    <!-- 向導第一步（選存儲模式）已經拿掉：這組選項留個殼但永不顯示，
+         免得動約束把整個頁面弄壞。資料目錄由 TrimeApplication.externalFilesDir 決定。 -->
     <RadioGroup
         android:id="@+id/storage_mode_options"
+        android:visibility="gone"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="24dp"

@@ -383,7 +383,7 @@ class AppPrefs(
             const val USER_DB_MIGRATED = "profile_user_db_migrated"
         }
 
-        val dataStorageMode = enum(R.string.data_storage_mode, DATA_STORAGE_MODE, DataStorageMode.EXTERNAL_SYNC)
+        val dataStorageMode = enum(R.string.data_storage_mode, DATA_STORAGE_MODE, DataStorageMode.APP_STORAGE)
         val externalRimeTreeUri = string(EXTERNAL_RIME_TREE_URI, "")
         val userDbMigrated = bool(USER_DB_MIGRATED, false)
         val periodicBackgroundSync = bool(PERIODIC_BACKGROUND_SYNC, false)
