@@ -5,8 +5,8 @@
 name: Commit
 on:
   push:
-  # 這個倉的 push 事件目前送不到 Actions（見 README／交接檔），
-  # 所以留一個手動觸發口，推交後由代理主動 kick 一次。
+  # 重倉剛重建時，workflow 要被 GitHub 掃描登記才吃 push 事件，頭幾次推交會「看起來沒跑」
+  # （實測延遲 1–2 分鐘）。留一個手動觸發口，趕時間可以直接 kick。
   workflow_dispatch:
 
 # 同一分支連續推交時只留最後一發：這套 matrix 是 4 個 OS × 4 個 ABI 的原生編譯，
