@@ -1216,6 +1216,41 @@ preset_keyboards:
     - {click: '.', long_click: '>'}
     - {click: '/', long_click: '?'}
     - {click: Return, composing: Return1, long_click: CommitComment, width: 15}
+  t9_pinyin:
+    # 鍵盤 id 等於 rime 方案 id，切到「拼音九宮格」時會自動換上這面鍵盤
+    # （KeyboardWindow.smartMatchKeyboard 就是拿 schemaId 去 presetKeyboards 裡查）。
+    # 鍵面只送數字 2-9：按下的鍵到底是哪個字母，不由鍵盤猜，
+    # 由 t9_pinyin.schema.yaml 的 speller/algebra（拼音音節整段 xlit 成數字碼）
+    # 加詞庫詞頻決定——這是 Google／搜狗九宮格的做法，也是本方案能少的程式碼都少的理由。
+    name: 拼音九宮格
+    author: "trime-9key"
+    ascii_mode: 0
+    columns: 4
+    width: 25
+    height: 55
+    lock: true #切換程序時記憶鍵盤
+    # 經典九宮格佈局：左三列是數字盤，右一列是功能列。
+    #   ，。？！  2ABC   3DEF    ⌫
+    #   4GHI     5JKL   6MNO    😀
+    #   7PQRS    8TUV   9WXYZ   中|英
+    #   數字      符號    空格0    回车
+    keys:
+    - {label: '，。？！', click: ',', long_click: '。', swipe_up: '？', swipe_down: '！', swipe_left: '@', swipe_right: '、', key_text_size: 16}
+    - {label: ABC, click: '2'}
+    - {label: DEF, click: '3'}
+    - {click: BackSpace, long_click: Escape}
+    - {label: GHI, click: '4'}
+    - {label: JKL, click: '5'}
+    - {label: MNO, click: '6'}
+    - {click: liquid_keyboard_emoji, long_click: "'"}
+    - {label: PQRS, click: '7'}
+    - {label: TUV, click: '8'}
+    - {label: WXYZ, click: '9'}
+    - {click: Mode_switch, long_click: Menu}
+    - {click: Keyboard_number}
+    - {click: Keyboard_symbols}
+    - {click: space, hint: '0'}
+    - {click: Return, composing: Return1, long_click: CommitComment}
   us_intl:
     name: 美式國際
     author: "Terry Tsang <archerindigo@gmail.com>"
