@@ -67,6 +67,12 @@ android {
                         storePassword = project.signKeyStorePwd
                         keyAlias = project.signKeyAlias
                         keyPassword = project.signKeyPwd
+                        // 全部三個簽名區塊都要開：v1 給舊系統（minSdk 21 這一臺实測就是 Android 9）、
+                        // v2/v3 給新系統。AGP 的預設會隨 minSdk 跳過 v1，等於換臺機器裝不上。
+                        // 這一路只看 DSL 不夠，收口在 release-ci 的「產物未簽名就紅」那步。
+                        enableV1Signing = true
+                        enableV2Signing = true
+                        enableV3Signing = true
                     }
                 }
 

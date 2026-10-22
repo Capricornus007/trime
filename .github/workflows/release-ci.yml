@@ -61,6 +61,36 @@ jobs:
       - name: Build Trime
         run: make release
 
+      # 產物收口（規則 71）：DSL 寫了簽名不代表套得上——上游 keystore.properties 一旦被
+      # 覆寫，Gradle 會安靜地退回 runner 隨機 debug 金鑰，CI 照綠、發布說明照寫「已簽名」。
+      # 所以這裡驗「下載得到的那個 APK 本身」：v1+v2+v3 三個都要 true，而且憑證必須是
+      # keystore.properties 裡那把（期望值從金鑰反算，不是從 APK 反算，才抓得到退回 debug）。
+      - name: Verify APK signing
+        env:
+          KS_PASS: ${{ secrets.KEY_STORE_PASSWORD }}
+        run: |
+          set -euo pipefail
+          APKDIR=app/build/outputs/apk/release
+          mapfile -t APKS < <(find "$APKDIR" -maxdepth 1 -name '*.apk' | sort)
+          (( ${#APKS[@]} > 0 )) || { echo "::error::release 目錄裡沒有任何 APK"; exit 1; }
+          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -maxdepth 2 -type f -name apksigner | sort -V | tail -1)"
+          [[ -n "$APKSIGNER" ]] || { echo "::error::找不到 apksigner"; exit 1; }
+          sed -n 's/^keyBase64=//p' keystore.properties | base64 -d > /tmp/expected.ks
+          WANT="$(keytool -list -v -keystore /tmp/expected.ks -storepass:env KS_PASS \
+                  | sed -n 's/^[[:space:]]*SHA256:[[:space:]]*//p' | head -1 | tr -d ':' | tr 'A-F' 'a-f')"
+          [[ ${#WANT} -eq 64 ]] || { echo "::error::算不出期望憑證指紋"; exit 1; }
+          for apk in "${APKS[@]}"; do
+            echo "=== $apk ==="
+            OUT="$("$APKSIGNER" verify -v --min-sdk-version 21 "$apk")"   # --min-sdk-version 不可省：省的話 v1 會被跳過而誤判成壞包
+            printf '%s\n' "$OUT"
+            for s in v1 v2 v3; do
+              printf '%s\n' "$OUT" | grep -q "Verified using $s scheme.*: true" || { echo "::error::$s 簽名區塊缺失"; exit 1; }
+            done
+            GOT="$("$APKSIGNER" verify --print-certs "$apk" | sed -n 's/^Signer #1 certificate SHA-256 digest: //p' | tr -d ':' | tr 'A-F' 'a-f')"
+            [[ "$GOT" == "$WANT" ]] || { echo "::error::憑證不符（期望 $WANT，實際 $GOT）＝簽名退回隨機 debug 金鑰"; exit 1; }
+            echo "簽名檢查通過：v1+v2+v3，指紋 $GOT"
+          done
+
       - name: Add JNI cache
         if: ${{ !steps.jni-cache.outputs.cache-hit }}
         run: cp -R app/build/intermediates/merged_native_libs/release/mergeReleaseNativeLibs/out/lib app/prebuilt
