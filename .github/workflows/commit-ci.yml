@@ -5,6 +5,12 @@
 name: Commit
 on: [push]
 
+# 同一分支連續推交時只留最後一發：這套 matrix 是 4 個 OS × 4 個 ABI 的原生編譯，
+# 讓前一發跑完再排下一發只是白燒額度。
+concurrency:
+  group: commit-ci-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   CI_NAME: Commit CI
 jobs:
