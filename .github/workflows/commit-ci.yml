@@ -9,7 +9,7 @@ on:
   # （實測延遲 1–2 分鐘）。留一個手動觸發口，趕時間可以直接 kick。
   workflow_dispatch:
 
-# 同一分支連續推交時只留最後一發：這套 matrix 是 2 個 OS × 4 個 ABI 的原生編譯，
+# 同一分支連續推交時只留最後一發：這套 matrix 的原生編譯由 ubuntu runner 出齊 4 個 ABI，
 # 讓前一發跑完再排下一發只是白燒額度。
 concurrency:
   group: commit-ci-${{ github.ref }}
@@ -25,7 +25,8 @@ jobs:
       matrix:
         os:
           - ubuntu-26.04
-          - windows-2025
+        # macos / windows runner 已全部移除（2026-10-27 用戶裁定）：Android 產物由
+        # ubuntu runner 出齐（4 ABI 交叉編譯），其他 host 平臺的構建對發佈無增量。
         # macos-26 / macos-26-intel 已移除（2026-10-27 用戶裁定）：trime 是 Android 輸入法，
         # macOS runner 只驗證「不同 host 交叉編譯」而不產出 Apple 平臺產物——用戶沒有
         # Apple 設備、不發佈 Apple 平臺，這兩個 job 每輪白燒 runner 時間；且 macos-26-intel
