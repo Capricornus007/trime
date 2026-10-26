@@ -12,6 +12,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+
     <application
         android:name="com.osfans.trime.TrimeApplication"
         android:allowBackup="true"
@@ -25,6 +26,20 @@ SPDX-License-Identifier: GPL-3.0-or-later
         <service
             android:name=".ime.core.TrimeInputMethodService"
             android:directBootAware="true"
+            android:exported="true"
+            android:label="@string/trime_app_name"
+            android:permission="android.permission.BIND_INPUT_METHOD">
+            <intent-filter>
+                <action android:name="android.view.InputMethod" />
+            </intent-filter>
+            <meta-data
+                android:name="android.view.im"
+                android:resource="@xml/method" />
+        </service>
+
+        <!-- 九鍵鍵盤（t9-ime 搬入）：獨立 IME service，方案走 t9_pinyin；共用同一份 method.xml -->
+        <service
+            android:name=".t9.T9Service"
             android:exported="true"
             android:label="@string/trime_app_name"
             android:permission="android.permission.BIND_INPUT_METHOD">

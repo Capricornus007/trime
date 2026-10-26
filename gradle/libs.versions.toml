@@ -8,6 +8,10 @@ splitties = "3.0.0"
 aboutlibraries = "14.0.1"
 kotest = "6.0.7"
 iconics = "5.4.0"
+composeUi = "1.13.0-beta01"
+composeMaterial3 = "1.5.0-beta01"
+lifecycle = "2.11.0"
+savedstate = "1.5.0"
 
 [libraries]
 android-gradlePlugin = { group = "com.android.tools.build", name = "gradle", version.ref = "androidGradlePlugin" }
@@ -28,6 +32,14 @@ androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref =
 androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
 androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
 androidx-room-paging = { module = "androidx.room:room-paging", version.ref = "room" }
+# Compose 九鍵鍵盤（t9-ime 搬入）所需的尖端版本：material3 1.4.0 的 M3 Expressive
+# API（MaterialShapes／MotionScheme.expressive()）還是 internal，1.5.x 才公開；
+# compose ui 1.13.0-beta01 的 AAR metadata 要求 compileSdk ≥ 37.1（見 app gradle 的 compileSdkMinor）。
+androidx-compose-ui = { module = "androidx.compose.ui:ui", version.ref = "composeUi" }
+androidx-compose-foundation = { module = "androidx.compose.foundation:foundation", version.ref = "composeUi" }
+androidx-compose-material3 = { module = "androidx.compose.material3:material3", version.ref = "composeMaterial3" }
+androidx-lifecycle-runtime = { module = "androidx.lifecycle:lifecycle-runtime", version.ref = "lifecycle" }
+androidx-savedstate = { module = "androidx.savedstate:savedstate", version.ref = "savedstate" }
 androidx-viewpager2 = { module = "androidx.viewpager2:viewpager2", version = "1.1.0" }
 androidx-work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version = "2.9.1" }
 flexbox = { module = "com.google.android.flexbox:flexbox", version = "3.0.0" }
@@ -60,5 +72,6 @@ kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 aboutlibraries = { id = "com.mikepenz.aboutlibraries.plugin.android", version.ref = "aboutlibraries" }
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-parcelize = { id = "org.jetbrains.kotlin.plugin.parcelize", version.ref = "kotlin" }
 spotless = { id = "com.diffplug.spotless", version = "8.10.2" }

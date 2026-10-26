@@ -13,12 +13,16 @@ plugins {
     alias(libs.plugins.aboutlibraries)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.kotlin.parcelize)
+    // Compose 編譯器外掛（九鍵鍵盤層用；AGP 9 內建 Kotlin 支援，不能再套 kotlin.android）
+    alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
 }
 
 android {
     namespace = "com.osfans.trime"
     compileSdk = 37
+    // Compose ui 1.13.0-beta01 的 AAR metadata 要求 compileSdk ≥ 37.1；AGP 9 用兩段式表示。
+    compileSdkMinor = 2
     buildToolsVersion = "36.0.0"
 
     defaultConfig {
@@ -28,7 +32,10 @@ android {
         // 不佔上游的 com.osfans.trime（否則手機上兩支同包名、憑證不同，install -r 直接
         // INSTALL_FAILED_UPDATE_INCOMPATIBLE，而且上游一更新就把我們這支蓋掉）。
         applicationId = "org.capricornus007.trime"
-        minSdk = 21
+        // 2026-10-27 抬到 24：Compose 九鍵鍵盤（t9-ime 搬入）所依賴的 material3
+        // 1.5.0-beta01 系列宣告 minSdk 24，manifest merger 不放行更低值。
+        // t9-ime 原版就是 26；fork 收在 24 保住 Android 7.0+。
+        minSdk = 24
         targetSdk = 37
         versionCode = 20261101
         versionName = "3.3.13"
@@ -50,6 +57,8 @@ android {
         buildConfig = true
         viewBinding = true
         resValues = true
+        // 九鍵鍵盤（com.osfans.trime.t9）是 Compose 層
+        compose = true
     }
 
     buildTypes {
@@ -147,6 +156,13 @@ dependencies {
     implementation(libs.androidx.autofill)
     implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.core.ktx)
+    // Compose 九鍵鍵盤（t9-ime 搬入）：ui/foundation/material3 成套尖端版本，見 toml 註解。
+    implementation(libs.androidx.compose.ui)
+    implementation(libs.androidx.compose.foundation)
+    implementation(libs.androidx.compose.material3)
+    // IME 不是 Activity，T9Service 要自己當 lifecycle／savedstate 的 ViewTree 宿主。
+    implementation(libs.androidx.lifecycle.runtime)
+    implementation(libs.androidx.savedstate)
     implementation(libs.androidx.navigation.fragment)
     implementation(libs.androidx.navigation.ui)
     implementation(libs.androidx.paging.runtime.ktx)

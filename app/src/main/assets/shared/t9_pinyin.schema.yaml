@@ -10,9 +10,9 @@
 # 候选带完整带调拼音提示（translator/spelling_hints），所以虽然编码区
 # 显示的是数字，候选项上仍能看到对应的拼音。
 #
-# 词库：t9_dict（见 t9_dict.dict.yaml），取自雾凇拼音（rime-ice）的字表 +
-# 基础词库 + 扩展词库 + 杂项，比朙月拼音自带的词库大得多、更新更勤——
-# T9 的候选质量完全取决于词频，词库越好，猜得越准。
+# 詞庫：t9_dict（見 t9_dict.dict.yaml）。它只 import_tables: luna_pinyin，也就是
+# 「跟著使用者自己那套 rime 詞庫走」——你 user 目錄裡放什麼方案與詞庫，九鍵就用什麼，
+# 而不是另外綁一份倉庫自帶的大詞庫。T9 的候選品質完全取決於詞頻，詞庫越好猜得越準。
 
 schema:
   schema_id: t9_pinyin
@@ -36,9 +36,6 @@ switches:
     states: [ 漢字, 汉字 ]
   - name: ascii_punct
     states: [ 。，, ．， ]
-  - name: emoji            # 输入词语时附带 emoji 候选（如 哈哈 → 😄）
-    states: [ 无表情, 表情 ]
-    reset: 1
   - name: prediction       # 上屏后预测下一个字（见文件末尾 predictor）
     states: [ 无联想, 联想 ]
     reset: 1
@@ -66,7 +63,6 @@ engine:
     - reverse_lookup_translator
     - script_translator
   filters:
-    - simplifier@emoji     # 词语 → emoji 候选（雾凇 rime-ice 的 opencc/emoji.txt）
     - simplifier
     - uniquifier
     - lua_filter@*t9_preedit  # 编码区显示拼音而不是数字（见 lua/t9_preedit.lua）
@@ -102,15 +98,7 @@ translator:
   # 编码区不显示数字「64」，改显示拼音——由 lua/t9_preedit.lua 把每个候选的
   # preedit 覆盖成它的拼音（来自 spelling_hints 的 comment）。
 
-# 词语 → emoji：复用雾凇拼音(rime-ice)的 opencc/emoji.txt 映射表
-emoji:
-  option_name: emoji
-  opencc_config: emoji.json
-  inherit_comment: false
-  # 只在正常打字时给 emoji 候选。联想（prediction）的候选栏只有 5 个位置，
-  # 让 emoji 挤进去会顶掉真正的联想字（实测打「你」后 🙅 占了两个位置，
-  # 把「的/不/是」挤下去）。predict_engine 给联想片段打的 tag 是 prediction。
-  tags: [ abc ]
+# 词语 → emoji：等 rime-ice 那份 opencc/emoji.txt 進倉再掛回 simplifier@emoji。
 
 reverse_lookup:
   dictionary: stroke
