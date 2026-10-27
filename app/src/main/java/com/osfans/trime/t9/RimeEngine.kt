@@ -113,6 +113,18 @@ object RimeEngine {
 
     fun sendKey(keycode: Int, mask: Int = 0): Boolean = Rime.processRimeKey(keycode, mask)
 
+    /** 目前使用中的方案 id（挑字母時要知道自己在 t9_pinyin 還是 luna_pinyin）。 */
+    fun currentSchema(): String = Rime.getCurrentRimeSchema()
+
+    /**
+     * 把一整串字母當成按鍵餵給 rime（挑字母時用來重打「已修正的拼音」）。
+     * 這條是 librime 的 simulate_key_sequence，不是 Android 的 KeyEvent。
+     */
+    fun simulateKeySequence(sequence: String): Boolean = Rime.simulateRimeKeySequence(sequence)
+
+    /** 把目前組字中的內容直接上屏（標點鍵要送非 ASCII 字元前先收乾淨）。 */
+    fun commitComposition(): Boolean = Rime.commitRimeComposition()
+
     /** 這一輪 rime 要上屏的文字（選字、成詞、標點），沒有就回 null；每次按鍵後都該讀一次。 */
     fun commitText(): String? = Rime.getRimeCommit().text
 

@@ -46,6 +46,10 @@ class T9Service :
 
     private var uiState by mutableStateOf(KeyboardState())
 
+    // 挑字母工作階段：暫切到 luna_pinyin 把「精確拼音」組起來，上屏或退光後切回原方案。
+    private var picking = false
+    private var originSchema = T9_SCHEMA
+
     private data class KeyboardState(
         val code: String = "",
         val candidates: List<String> = emptyList(),
@@ -80,6 +84,8 @@ class T9Service :
                     onKey = ::onKey,
                     onCandidate = ::onCandidate,
                     onToggleMode = ::toggleMode,
+                    onPickLetter = ::pickLetter,
+                    onPunct = ::onPunct,
                 )
             }
         }
@@ -87,6 +93,9 @@ class T9Service :
 
     override fun onStartInput(attribute: EditorInfo?, restarting: Boolean) {
         super.onStartInput(attribute, restarting)
+        // 新欄位不能繼承上一個欄位挑到一半的狀態（process 可能被殺過）。
+        picking = false
+        originSchema = T9_SCHEMA
         RimeEngine.stageAssets(this)
         RimeEngine.startup(this)
         RimeEngine.selectSchema("t9_pinyin")
@@ -109,6 +118,9 @@ class T9Service :
 
     private fun onKey(digit: String) {
         if (!RimeEngine.ready) return
+        // 挑字母時方案是 luna_pinyin，數字會被 rime 當成選候選；直接吞掉，
+        // 要繼續組字就用同一顆鍵繼續滑動挑字母。
+        if (picking && digit.length == 1 && digit[0] in '1'..'9') return
         val consumed = when (digit) {
             "⌫" -> RimeEngine.sendKey(RimeEngine.KEY_BACKSPACE)
 
@@ -146,18 +158,97 @@ class T9Service :
         }
     }
 
+    /**
+     * 在數字鍵上挑了一個確切字母（按住＝中間、左滑＝第一個、右滑＝最後、四字母鍵上滑＝第二個）。
+     *
+     * 作法跟 lida0407 的 T9CorrectionState 一樣：t9_pinyin 的 speller 只吃數字，
+     * 所以暫時切到 luna_pinyin，把「修正後的拼音」整串重打一次；上屏（或退到空）
+     * 再切回原本的方案。已存在的同組字母會被替換（hao→gao），不同組則接在後面
+     * （h→ha→hao），所以可以連續挑字母組出整個詞。
+     */
+    private fun pickLetter(letter: Char) {
+        if (!RimeEngine.ready) return
+        val group = LETTER_GROUPS.firstOrNull { letter in it } ?: return
+        // 英文模式沒有拼音要消歧：滑到哪個字母就直接打那個字母。
+        if (RimeEngine.getOption("ascii_mode")) {
+            currentInputConnection?.commitText(letter.toString(), 1)
+            refresh()
+            return
+        }
+        val raw = RimeEngine.preedit().replace(CURSOR_MARK, "").trim()
+        val corrected = if (raw.isEmpty()) {
+            letter.toString()
+        } else {
+            val idx = raw.indexOfFirst { it.lowercaseChar() in group }
+            when {
+                idx < 0 -> raw + letter
+                raw[idx].lowercaseChar() == letter -> return
+                else -> raw.substring(0, idx) + letter + raw.substring(idx + 1)
+            }
+        }
+        if (!picking) {
+            // 切方案前先記住使用者的原方案（通常就是 t9_pinyin）。
+            originSchema = RimeEngine.currentSchema()
+                .takeIf { it.isNotBlank() && it != LETTER_SCHEMA }
+                ?: T9_SCHEMA
+            picking = true
+        }
+        RimeEngine.clearComposition()
+        if (RimeEngine.currentSchema() != LETTER_SCHEMA) {
+            RimeEngine.selectSchema(LETTER_SCHEMA)
+        }
+        // 多音節的編碼區用空格分隔，重打時改成可輸入的隔音符號。
+        RimeEngine.simulateKeySequence(corrected.replace(' ', '\''))
+        drainCommit()
+        refresh()
+    }
+
+    private fun onPunct(text: String) {
+        if (!RimeEngine.ready) return
+        val c = text.firstOrNull() ?: return
+        if (c.code < 0x80) {
+            // ASCII 標點交給 rime 的 punctuator：中文模式會變成全角，英文模式維持半角。
+            RimeEngine.sendKey(c.code)
+        } else {
+            // 「、」這類字元沒有對應 keysym：先把組字收掉再直接上屏，免得編碼區留在畫面上。
+            if (RimeEngine.commitComposition()) drainCommit()
+            currentInputConnection?.commitText(text, 1)
+        }
+        drainCommit()
+        refresh()
+    }
+
+    /** 挑字母工作階段結束（上屏、退到空、或換欄位）：切回原本的方案。 */
+    private fun endPicking() {
+        if (!picking) return
+        picking = false
+        RimeEngine.clearComposition()
+        RimeEngine.selectSchema(originSchema)
+    }
+
     /** rime 決定要上屏的東西（選字、成詞、標點上屏）都走這裡，不這樣讀會漏字。 */
     private fun drainCommit() {
         val text = RimeEngine.commitText() ?: return
         currentInputConnection?.commitText(text, 1)
+        // 挑字母後選字／按空格＝這個詞結束，切回九鍵方案。
+        if (picking) endPicking()
     }
 
     private fun refresh() {
         if (!RimeEngine.ready) return
+        // 退到空組字（例如一直按退格）也代表挑字母結束，別把使用者留在 luna_pinyin。
+        if (picking && RimeEngine.preedit().isEmpty()) endPicking()
         uiState = KeyboardState(
             code = RimeEngine.preedit(),
             candidates = RimeEngine.candidates().map { it.text },
             asciiMode = RimeEngine.getOption("ascii_mode"),
         )
+    }
+
+    private companion object {
+        const val T9_SCHEMA = "t9_pinyin"
+        const val LETTER_SCHEMA = "luna_pinyin"
+        const val CURSOR_MARK = "\u2038"
+        val LETTER_GROUPS = listOf("abc", "def", "ghi", "jkl", "mno", "pqrs", "tuv", "wxyz")
     }
 }
