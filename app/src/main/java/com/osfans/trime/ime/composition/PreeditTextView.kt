@@ -66,6 +66,7 @@ constructor(
                 draggedPastSlop = false
                 return true
             }
+
             MotionEvent.ACTION_MOVE -> {
                 val dx = x - downX
                 val dy = y - downY
@@ -77,7 +78,8 @@ constructor(
 
             MotionEvent.ACTION_UP -> {
                 if (draggedPastSlop && lastTapOffset in text.indices) {
-                    onDragLetter?.invoke(lastTapOffset, /* forward = */ y < downY)
+                    val forward = y < downY
+                    onDragLetter?.invoke(lastTapOffset, forward)
                 } else if (event.eventTime - downTime >= cursorHoldTimeout) {
                     // deliberate hold: the user really is aiming at the caret
                     onMoveCursor?.invoke(newCursorPos)

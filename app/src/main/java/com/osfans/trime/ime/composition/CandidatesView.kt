@@ -122,6 +122,7 @@ class CandidatesView(
                 candidates = it.data
                 updateUi()
             }
+
             is RimeMessage.CommitTextMessage -> {
                 T9CorrectionState.onCommit(rime)
             }

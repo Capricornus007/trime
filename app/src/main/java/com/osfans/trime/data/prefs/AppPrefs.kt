@@ -247,6 +247,7 @@ class AppPrefs(
         val speakOnCommit = switch(R.string.speak_on_commit, SPEAK_ON_COMMIT, false)
         val popupOnKeyPress = switch(R.string.popup_on_key_press, POPUP_ON_KEY_PRESS, false)
         val expandKeypressArea = switch(R.string.expand_keypress_area_to_edge, EXPAND_KEYPRESS_AREA, false)
+
         // trime-9key: this is now genuinely interpreted as dp (GestureFrame
         // used to compare it against raw pixels). 24dp keeps the travel that
         // the old 60-"dp"-but-really-px default produced on a ~420dpi phone,

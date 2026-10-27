@@ -116,6 +116,7 @@ class KeyView(
                         val actionBehavior = if (pressedIdx != -1 && pressedIdx != id) KeyBehavior.COMBO else behavior
                         key.getAction(actionBehavior)?.let { processKeyAction(it, actionBehavior) }
                     }
+
                     KeyBehavior.SWIPE_UP, KeyBehavior.SWIPE_DOWN, KeyBehavior.SWIPE_LEFT, KeyBehavior.SWIPE_RIGHT,
                     -> {
                         // trime-9key: a fast tap that drifts past the swipe
@@ -127,6 +128,7 @@ class KeyView(
                         val effective = if (key.getAction(behavior) != null) behavior else KeyBehavior.CLICK
                         action?.let { processKeyAction(it, effective) }
                     }
+
                     KeyBehavior.DOUBLE_CLICK, KeyBehavior.LAZY_DOUBLE_CLICK,
                     ->
                         key.getAction(behavior)?.let { processKeyAction(it, behavior) }
@@ -362,7 +364,7 @@ class KeyView(
      * those would bury the keyboard in corner text.
      */
     private fun drawSideGestureHints(canvas: Canvas) {
-        if (rime.run { getRuntimeOption("_hide_key_symbol") }) return
+        if (keyboardView.hideKeySymbol) return
         val face = key.getLabel()
         if (face.length < 2) return
         fun letterHint(behavior: KeyBehavior): String = key
@@ -378,7 +380,7 @@ class KeyView(
         symbolPaint.apply {
             color = key.getSymbolColor()
             textSize = sp(key.symbolTextSize.takeIf { it > 0f } ?: keyboardView.symbolTextSize)
-            typeface = FontManager.getTypeface("symbol_font")
+            typeface = theme.fonts.symbol
             alpha = SIDE_HINT_ALPHA
         }
         // On the label's own line, not the key's bottom edge: down there the
