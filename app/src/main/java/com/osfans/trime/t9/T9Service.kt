@@ -208,7 +208,8 @@ class T9Service :
         val c = text.firstOrNull() ?: return
         if (c.code < 0x80) {
             // ASCII 標點交給 rime 的 punctuator：中文模式會變成全角，英文模式維持半角。
-            RimeEngine.sendKey(c.code)
+            val consumed = RimeEngine.sendKey(c.code)
+            if (!consumed) currentInputConnection?.commitText(text, 1)
         } else {
             // 「、」這類字元沒有對應 keysym：先把組字收掉再直接上屏，免得編碼區留在畫面上。
             if (RimeEngine.commitComposition()) drainCommit()
