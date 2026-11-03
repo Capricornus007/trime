@@ -81,6 +81,12 @@
     <string name="setup__skip_hint">您確定要跳過嚮導嗎？</string>
     <string name="setup__skip_hint_yes">好的，謝謝</string>
     <string name="setup__skip_hint_no">不，我想留在這兒</string>
+    <string name="storage_permission">公共 Rime 資料夾存取權</string>
+    <string name="storage_permission_granted">已允許 — 正在使用 /Rime</string>
+    <string name="storage_permission_denied">已拒絕 — Rime 已停止</string>
+    <string name="setup__storage_permission_denied">儲存空間權限：已拒絕。在允許存取公共 /Rime 資料夾前，Trime 不會啟動或讀寫檔案。</string>
+    <string name="setup__storage_permission_granted_hint">儲存空間權限：已允許。公共 /Rime 資料夾是唯一的 Rime 資料來源。</string>
+    <string name="setup__open_storage_settings">開啟儲存空間權限設定</string>
     <string name="follow_system_day_night_color">跟隨系統設定主題色調</string>
     <string name="hook_ctrl_a">攔截 Ctrl+A</string>
     <string name="hook_ctrl_cv">攔截 Ctrl+C/V/X</string>

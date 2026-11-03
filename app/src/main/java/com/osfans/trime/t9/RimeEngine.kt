@@ -5,7 +5,8 @@ import android.util.Log
 import com.osfans.trime.core.CandidateProto
 import com.osfans.trime.core.Rime
 import com.osfans.trime.core.RimeMessage
-import java.io.File
+import com.osfans.trime.data.base.DataManager
+import com.osfans.trime.util.RimeStoragePermission
 
 /**
  * librime 的啟動與按鍵封裝。
@@ -28,7 +29,6 @@ object RimeEngine {
     const val KEY_SPACE = 0x20
 
     private const val TAG = "T9Rime"
-    private const val MARKER = ".t9-shared-version"
 
     var ready = false
         private set
@@ -40,69 +40,36 @@ object RimeEngine {
 
     var onDeployed: (() -> Unit)? = null
 
-    fun sharedDir(context: Context) = File(context.filesDir, "rime/shared")
+    /** 權限核准後才同步並啟動；兩套鍵盤共用公共 `/Rime` 這份唯一資料源。 */
+    fun startup(context: Context): Boolean {
+        if (ready && RimeStoragePermission.isGranted(context)) return true
+        return RimeStoragePermission.runIfGranted(context) {
+            DataManager.sync()
+            Rime.registerRimeMessageHandler { message ->
+                when (message) {
+                    is RimeMessage.DeployMessage -> when (message.data) {
+                        RimeMessage.DeployMessage.State.Success -> {
+                            Log.i(TAG, "rime 部署成功")
+                            deployed = true
+                            onDeployed?.invoke()
+                        }
 
-    fun userDir(context: Context) = File(context.filesDir, "rime/user")
+                        RimeMessage.DeployMessage.State.Failure -> Log.w(TAG, "rime 部署失敗")
 
-    /**
-     * 把 APK 裡的 `assets/shared` 解到內部儲存。用版本號當marker：
-     * 同一版只解一次，升級（versionName 變）才重解，使用者自己放進 user 目錄的東西永遠不動。
-     */
-    fun stageAssets(context: Context) {
-        val shared = sharedDir(context)
-        userDir(context).mkdirs()
-        val marker = File(shared, MARKER)
-        val version = context.packageManager.getPackageInfo(context.packageName, 0).versionName
-        if (marker.exists() && marker.readText() == version) return
-        shared.mkdirs()
-        copyAssets(context, "shared", shared)
-        marker.writeText(version ?: "unknown")
-        // 換了版本的 shared，舊的編譯產物（prism/table/userdb）要丟給 rime 重建，
-        // 否則 start_maintenance(fullCheck) 會拿舊 bin 配新 yaml。
-        shared.listFiles()?.filter { it.extension in setOf("prism", "table", "bin") }?.forEach { it.delete() }
-    }
-
-    private fun copyAssets(context: Context, path: String, dest: File) {
-        val children = context.assets.list(path) ?: return
-        if (children.isEmpty()) {
-            context.assets.open(path).use { input ->
-                File(dest.parentFile, dest.name).outputStream().use { input.copyTo(it) }
-            }
-            return
-        }
-        dest.mkdirs()
-        for (child in children) {
-            if (child == MARKER) continue
-            copyAssets(context, "$path/$child", File(dest, child))
-        }
-    }
-
-    fun startup(context: Context) {
-        if (ready) return
-        Rime.registerRimeMessageHandler { message ->
-            when (message) {
-                is RimeMessage.DeployMessage -> when (message.data) {
-                    RimeMessage.DeployMessage.State.Success -> {
-                        Log.i(TAG, "rime 部署成功")
-                        deployed = true
-                        onDeployed?.invoke()
+                        else -> Unit
                     }
-
-                    RimeMessage.DeployMessage.State.Failure -> Log.w(TAG, "rime 部署失敗")
 
                     else -> Unit
                 }
-
-                else -> Unit
             }
+            Rime.startupRime(
+                DataManager.sharedDataDir.absolutePath,
+                DataManager.userDataDir.absolutePath,
+                context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "0",
+                true,
+            )
+            ready = true
         }
-        Rime.startupRime(
-            sharedDir(context).absolutePath,
-            userDir(context).absolutePath,
-            context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "0",
-            true,
-        )
-        ready = true
     }
 
     fun selectSchema(schemaId: String): Boolean {

@@ -10,6 +10,7 @@ import com.osfans.trime.data.base.DataManager
 import com.osfans.trime.data.prefs.AppPrefs
 import com.osfans.trime.util.DeployNotification
 import com.osfans.trime.util.FileUtils
+import com.osfans.trime.util.RimeStoragePermission
 import com.osfans.trime.util.appContext
 import io.github.whiredplanck.storageaccess.StorageAccess
 import io.github.whiredplanck.storageaccess.StorageWalkEntry
@@ -59,7 +60,8 @@ object RimeDataSync {
         }
     }
 
-    fun isStorageAvailable(): Boolean = !usesExternalSync() || hasExternalAccess()
+    fun isStorageAvailable(): Boolean =
+        RimeStoragePermission.isGranted() && (!usesExternalSync() || hasExternalAccess())
 
     /**
      * Whether the user finished the storage-mode setup step.

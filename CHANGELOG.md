@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [未發佈]
+
+### 🐛 錯誤修正
+
+- 修正 Android 11 以上未宣告「所有檔案存取權」而無法寫入公共 `/Rime`；設定精靈與應用設定現在會顯示權限狀態、提供重試與設定頁備援，未授權時不會啟動 Rime 或寫入檔案。
+
+### 📚 文件
+
+- 說明公共 `/Rime` 唯一資料來源與 Android 版本對應的儲存空間權限。
+
 ## [3.3.12] - 2026-09-01
 
 ### 🚀 Features

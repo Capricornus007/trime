@@ -8,6 +8,7 @@ import android.content.res.AssetManager
 import android.os.Build
 import com.osfans.trime.TrimeApplication
 import com.osfans.trime.util.FileUtils
+import com.osfans.trime.util.RimeStoragePermission
 import com.osfans.trime.util.appContext
 import kotlinx.serialization.json.Json
 import timber.log.Timber
@@ -61,8 +62,8 @@ object DataManager {
 
     private val externalFilesDir get() = TrimeApplication.getInstance().externalFilesDir
 
-    val sharedDataDir = File(externalFilesDir, "shared").also { it.mkdirs() }
-    val userDataDir = File(externalFilesDir, "rime").also { it.mkdirs() }
+    val sharedDataDir = File(externalFilesDir, "shared")
+    val userDataDir = File(externalFilesDir, "rime")
 
     val prebuiltDataDir = File(sharedDataDir, "build")
     val stagingDir = File(userDataDir, "build")
@@ -85,6 +86,15 @@ object DataManager {
     }
 
     fun sync() = lock.withLock {
+        check(RimeStoragePermission.isGranted()) {
+            "Public Rime storage permission is required before synchronizing data"
+        }
+        check(sharedDataDir.isDirectory || sharedDataDir.mkdirs()) {
+            "Unable to create shared Rime data directory: ${sharedDataDir.absolutePath}"
+        }
+        check(userDataDir.isDirectory || userDataDir.mkdirs()) {
+            "Unable to create user Rime data directory: ${userDataDir.absolutePath}"
+        }
         val destChecksumsFile = File(dataDir, DATA_CHECKSUMS_NAME)
         val oldChecksums =
             destChecksumsFile

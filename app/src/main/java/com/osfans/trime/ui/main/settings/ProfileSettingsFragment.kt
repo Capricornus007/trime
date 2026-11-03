@@ -24,6 +24,7 @@ import com.osfans.trime.ui.common.PaddingPreferenceFragment
 import com.osfans.trime.ui.common.withLoadingDialog
 import com.osfans.trime.ui.main.MainViewModel
 import com.osfans.trime.util.ResourceUtils
+import com.osfans.trime.util.RimeStoragePermission
 import com.osfans.trime.util.addCategory
 import com.osfans.trime.util.addPreference
 import com.osfans.trime.util.buildDocumentsProviderIntent
@@ -68,6 +69,7 @@ class ProfileSettingsFragment : PaddingPreferenceFragment() {
 
     private lateinit var dataStorageModePreference: ListPreference
     private lateinit var dataPathPreference: Preference
+    private lateinit var storagePermissionPreference: Preference
 
     private lateinit var editSyncIntervalPreference: EditTextIntPreference
 
@@ -104,6 +106,16 @@ class ProfileSettingsFragment : PaddingPreferenceFragment() {
     private fun updateStorageModeUi() {
         dataStorageModePreference.value = dataStorageMode.name
         dataPathPreference.isEnabled = dataStorageMode == DataStorageMode.EXTERNAL_SYNC
+    }
+
+    private fun updateStoragePermissionSummary() {
+        storagePermissionPreference.setSummary(
+            if (RimeStoragePermission.isGranted(requireContext())) {
+                R.string.storage_permission_granted
+            } else {
+                R.string.storage_permission_denied
+            },
+        )
     }
 
     private fun pickDataPath() {
@@ -202,6 +214,17 @@ class ProfileSettingsFragment : PaddingPreferenceFragment() {
         preferenceScreen = preferenceManager.createPreferenceScreen(ctx).apply {
             addCategory(R.string.storage) {
                 isIconSpaceReserved = false
+                addPreference(
+                    Preference(ctx).apply {
+                        storagePermissionPreference = this
+                        isIconSpaceReserved = false
+                        setTitle(R.string.storage_permission)
+                        setOnPreferenceClickListener {
+                            RimeStoragePermission.openSettings(ctx)
+                            true
+                        }
+                    },
+                )
                 val storageModes = DataStorageMode.entries
                 addPreference(
                     ListPreference(ctx).apply {
@@ -361,6 +384,7 @@ class ProfileSettingsFragment : PaddingPreferenceFragment() {
             }
         }
         updateStorageModeUi()
+        updateStoragePermissionSummary()
     }
 
     override fun onDestroy() {
@@ -374,6 +398,7 @@ class ProfileSettingsFragment : PaddingPreferenceFragment() {
     override fun onResume() {
         super.onResume()
         updateStorageModeUi()
+        updateStoragePermissionSummary()
         val ctx = requireContext()
         if (
             RimeDataSync.usesExternalSync() &&

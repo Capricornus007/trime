@@ -94,21 +94,15 @@ class TrimeApplication : Application() {
      *
      * 為什麼不退回：退回會造成「同一份 rime 配置存在兩個地方」的分裂狀態——
      * 使用者那份 PC↔手機通用的配置、userdb、自訂方案就不知道该認哪一處，
-     * 而且換目錄時看起來像資料掉了。寫不進去就明確報錯並去要
-     * All files access（見 SetupActivity.askAllFilesAccess），不是偷偷換地方。
+     * 而且換目錄時看起來像資料掉了。Rime 啟動前會先經過
+     * `RimeStoragePermission` 權限閘門，不會在拒絕時嘗試建立或寫入目錄。
      *
      * 順帶：這也避開裝置側的坑——實測這臺 realme 的 `StorageManager.mkdirs`
      * 建不出 `Android/data/<包>/files`，原本 `DataManager.copyFile →
      * getExternalFilesDir` 對它是硬依賴，首啟直接 `System.exit(10)`。
      */
     val externalFilesDir: File
-        get() = File(Environment.getExternalStorageDirectory(), PUBLIC_RIME_DIR_NAME).also { dir ->
-            if (!dir.isDirectory && !runCatching { dir.mkdirs() }.getOrDefault(false)) {
-                Timber.e("建不出 Rime 資料目錄 ${dir.path}：需要 All files access（MANAGE_EXTERNAL_STORAGE）")
-            } else if (!dir.canWrite()) {
-                Timber.e("Rime 資料目錄 ${dir.path} 不可寫：需要 All files access（MANAGE_EXTERNAL_STORAGE）")
-            }
-        }
+        get() = File(Environment.getExternalStorageDirectory(), PUBLIC_RIME_DIR_NAME)
 
     override fun onCreate() {
         super.onCreate()

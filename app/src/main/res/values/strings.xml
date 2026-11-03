@@ -81,6 +81,12 @@
     <string name="setup__skip_hint">"Do you want to skip the setup wizard? "</string>
     <string name="setup__skip_hint_yes">OK, thanks</string>
     <string name="setup__skip_hint_no">No, please leave me here</string>
+    <string name="storage_permission">Public Rime folder access</string>
+    <string name="storage_permission_granted">Granted — using /Rime</string>
+    <string name="storage_permission_denied">Denied — Rime is stopped</string>
+    <string name="setup__storage_permission_denied">Storage access: denied. Trime will not start or touch files until you allow access to the public /Rime folder.</string>
+    <string name="setup__storage_permission_granted_hint">Storage access: granted. The public /Rime folder is the only Rime data source.</string>
+    <string name="setup__open_storage_settings">Open storage access settings</string>
     <string name="follow_system_day_night_color">Follow system day/night color</string>
     <string name="hook_ctrl_a">Hook Ctrl+A</string>
     <string name="hook_ctrl_cv">Hook Ctrl+C/V/X</string>

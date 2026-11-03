@@ -20,6 +20,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 [查看文檔](https://github.com/osfans/trime/wiki)
 
+### 儲存空間權限
+
+本分支固定以外部儲存空間根目錄下的公共 `/Rime` 資料夾作為唯一 Rime 資料來源，不會在權限不足時改用另一份應用專用資料。Android 11 以上請在設定精靈或「設定 → 使用者資料」授予「所有檔案存取權」；Android 10 以下則授予儲存空間權限。未授權時 Trime 會在任何 Rime 檔案讀寫前停止啟動，授權後可回到原頁面重試。
+
 ## 下載
 
 - 穩定版 <br>

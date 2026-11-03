@@ -7,11 +7,6 @@ package com.osfans.trime.ui.setup
 
 import android.app.PendingIntent
 import android.content.Intent
-import android.net.Uri
-import android.os.Build
-import android.os.Bundle
-import android.os.Environment
-import android.provider.Settings
 import android.widget.Button
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AlertDialog
@@ -33,7 +28,6 @@ import com.osfans.trime.util.appContext
 import com.osfans.trime.util.createNotificationChannel
 import com.osfans.trime.util.startActivity
 import splitties.systemservices.notificationManager
-import timber.log.Timber
 
 class SetupActivity : FragmentActivity() {
     private lateinit var viewPager: ViewPager2
@@ -60,32 +54,8 @@ class SetupActivity : FragmentActivity() {
         fun shouldShowUp() = !shown && SetupPage.hasUndonePage()
     }
 
-    /**
-     * 首啟自己去要「所有檔案存取權」（All files access）。
-     *
-     * Rime 的資料目錄現在預設落在公共的 `<外部儲存根>/Rime`（見
-     * TrimeApplication.externalFilesDir），Android 11 起那需要 MANAGE_EXTERNAL_STORAGE；
-     * 系統不允許應用自行授予，所以這裡直接跳到該應用的那個設定頁，使用者按一次「允許」就好。
-     * 已有權限、或裝置不支援（Android 10 以下走舊的 WRITE_EXTERNAL_STORAGE 流程）就什麼都不做。
-     */
-    private fun askAllFilesAccess() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return
-        if (Environment.isExternalStorageManager()) return
-        runCatching {
-            startActivity(
-                Intent(
-                    Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
-                    Uri.parse("package:$packageName"),
-                ),
-            )
-        }.onFailure {
-            Timber.w(it, "跳不到 All files access 設定頁；資料目錄會退回應用專用目錄")
-        }
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        askAllFilesAccess()
         enableEdgeToEdge()
         val binding = ActivitySetupBinding.inflate(layoutInflater)
         ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, windowInsets ->
@@ -192,6 +162,8 @@ class SetupActivity : FragmentActivity() {
     override fun onResume() {
         notificationManager.cancel(NOTIFY_ID)
         super.onResume()
+        refreshCurrentFragment()
+        updateButtons()
     }
 
     private inner class Adapter : FragmentStateAdapter(this) {

@@ -11,10 +11,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 讀取如下資訊和權限：
 
-* 存儲空間：用於保存用戶詞典數據和配置信息。
-* 麥克風：用於系統語音輸入，如不需要可關閉。
+* 儲存空間（必要）：用於公共 `/Rime` 資料夾內的使用者詞典與設定檔。Android 11 以上使用「所有檔案存取權」，Android 10 以下使用儲存空間權限；應用只將 `/Rime` 作為 Rime 資料來源。
+* 麥克風（選用）：用於系統語音輸入，如不需要可關閉。
 
-2017年7月25日更新
+2026年11月3日更新
 
 ## Privacy Policy
 
@@ -23,7 +23,7 @@ It won't collect or upload any user's privacy to any external service or server 
 
 Permissions application needs:
 
-* Storage(NEED): Used to keep the dictionary data and configuration file.
-* Microphone(OPTIONAL): Used for voice input. 
+* Storage (REQUIRED): Used for user dictionaries and configuration in the public `/Rime` folder. Android 11 and newer use All files access; Android 10 and older use the storage permission. The app uses only `/Rime` as its Rime data source.
+* Microphone (OPTIONAL): Used for system voice input and can be disabled when not needed.
 
-Updated on 2017.7.25
+Updated on 2026-11-03

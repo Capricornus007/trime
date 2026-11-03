@@ -96,8 +96,10 @@ class T9Service :
         // 新欄位不能繼承上一個欄位挑到一半的狀態（process 可能被殺過）。
         picking = false
         originSchema = T9_SCHEMA
-        RimeEngine.stageAssets(this)
-        RimeEngine.startup(this)
+        if (!RimeEngine.startup(this)) {
+            uiState = KeyboardState()
+            return
+        }
         RimeEngine.selectSchema("t9_pinyin")
         RimeEngine.onDeployed = {
             // 詞庫編完才選得到方案，選成功要回頭把候選列刷一次。

@@ -11,8 +11,6 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import com.osfans.trime.R
-import com.osfans.trime.data.prefs.AppPrefs
-import com.osfans.trime.data.sync.RimeDataSync
 import com.osfans.trime.databinding.FragmentSetupBinding
 import com.osfans.trime.util.serializable
 
@@ -21,15 +19,13 @@ class SetupFragment : Fragment() {
 
     private val page: SetupPage by lazy { requireArguments().serializable("page")!! }
 
-    private val prefs = AppPrefs.defaultInstance().profile
-
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?,
     ): View {
-        // 向導不再問「Rime 資料存哪裡」：資料目錄由 TrimeApplication.externalFilesDir
-        // 直接定成公共目錄（<外部儲存根>/Rime），首啟自動去要 All files access。
+        // The first page owns the public `/Rime` permission gate; returning from system
+        // settings calls [sync] so granted/denied state and the retry action stay current.
         binding = FragmentSetupBinding.inflate(inflater)
         sync()
         return binding.root
@@ -46,6 +42,7 @@ class SetupFragment : Fragment() {
             actionButton.text = page.getButtonText(requireContext())
             actionButton.setOnClickListener { page.getButtonAction(requireActivity()) }
             doneText.visibility = if (done) View.VISIBLE else View.GONE
+            doneText.text = page.getDoneText(requireContext())
             doneIcon.visibility = if (done) View.VISIBLE else View.GONE
         }
     }

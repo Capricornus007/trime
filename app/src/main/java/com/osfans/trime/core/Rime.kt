@@ -11,6 +11,7 @@ import com.osfans.trime.data.opencc.OpenCCDictManager
 import com.osfans.trime.data.prefs.AppPrefs
 import com.osfans.trime.data.sync.RimeDataSync
 import com.osfans.trime.ime.core.InlinePreeditMode
+import com.osfans.trime.util.RimeStoragePermission
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -300,6 +301,9 @@ class Rime :
     }
 
     private fun startRime(fullCheck: Boolean) {
+        check(RimeStoragePermission.isGranted()) {
+            "Public Rime storage permission was revoked before native startup"
+        }
         DataManager.sync()
         val sharedDataDir = DataManager.sharedDataDir.absolutePath
         val userDataDir = DataManager.userDataDir.absolutePath

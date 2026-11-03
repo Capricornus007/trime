@@ -77,6 +77,12 @@
     <string name="setup__skip_hint">您确定要跳过向导吗？</string>
     <string name="setup__skip_hint_yes">好的，谢谢</string>
     <string name="setup__skip_hint_no">不，我想留在这儿</string>
+    <string name="storage_permission">公共 Rime 文件夹访问权限</string>
+    <string name="storage_permission_granted">已允许 — 正在使用 /Rime</string>
+    <string name="storage_permission_denied">已拒绝 — Rime 已停止</string>
+    <string name="setup__storage_permission_denied">存储权限：已拒绝。在允许访问公共 /Rime 文件夹前，Trime 不会启动或读写文件。</string>
+    <string name="setup__storage_permission_granted_hint">存储权限：已允许。公共 /Rime 文件夹是唯一的 Rime 数据源。</string>
+    <string name="setup__open_storage_settings">打开存储权限设置</string>
     <string name="follow_system_day_night_color">跟随系统夜间模式</string>
     <string name="hook_ctrl_a">拦截 Ctrl+A</string>
     <string name="hook_ctrl_cv">拦截 Ctrl+C/V/X</string>

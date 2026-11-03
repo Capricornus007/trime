@@ -11,6 +11,12 @@ SPDX-License-Identifier: GPL-3.0-or-later
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="29" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="29" />
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
+        tools:ignore="ScopedStorage" />
 
 
     <application
@@ -21,6 +27,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
         android:roundIcon="@mipmap/ic_app_icon_round"
         android:theme="@style/Theme.TrimeAppTheme"
         android:hasFragileUserData="true"
+        android:requestLegacyExternalStorage="true"
         tools:targetApi="29">
 
         <service

@@ -54,6 +54,13 @@ object RimeDaemon {
 
     private val lock = ReentrantLock()
 
+    private fun startIfStopped() = lock.withLock {
+        if (realRime.lifecycle.currentState == RimeLifecycle.State.STOPPED) {
+            Timber.d("RimeDaemon start rime")
+            realRime.startup()
+        }
+    }
+
     private fun establish(name: String) = object : RimeSession {
         private inline fun <T> ensureEstablished(block: () -> T) = if (name in sessions) {
             block()
@@ -66,6 +73,7 @@ object RimeDaemon {
         }
 
         override suspend fun <T> runOnReady(block: suspend RimeApi.() -> T): T = ensureEstablished {
+            startIfStopped()
             realRime.lifecycle.whenReady { block(rimeImpl) }
         }
 
@@ -84,12 +92,9 @@ object RimeDaemon {
     }
 
     fun createSession(name: String): RimeSession = lock.withLock {
+        startIfStopped()
         if (name in sessions) {
             return@withLock sessions.getValue(name)
-        }
-        if (realRime.lifecycle.currentState == RimeLifecycle.State.STOPPED) {
-            Timber.d("RimeDaemon start rime")
-            realRime.startup()
         }
         val session = establish(name)
         sessions[name] = session
