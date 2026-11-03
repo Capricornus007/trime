@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [未發佈]
 
+### 🚀 功能
+
+- Android 清單收斂成唯一的主 Trime IME service；移除獨立 Compose T9 service 與平行 Rime engine。
+- 主鍵盤新增持久化模式列，只提供中文26鍵、中文9鍵、中文手寫、日文QWERTY、日文手寫、英文QWERTY；中文 **简/繁** 直接切換 Rime/OpenCC 輸出及相符手寫模型。
+- 使用 `com.google.mlkit:digital-ink-recognition:19.0.0` 實作中文、日文與英文裝置端手寫，含模型下載狀態、失敗重試、真實筆畫/時間、候選、清除與退一筆。
+- 加入 pinned Apache-2.0 `rime-jaroomaji` 日文羅馬字方案與清楚分列授權的原創精簡詞典。
+
 ### 🐛 錯誤修正
 
 - 修正 Android 11 以上未宣告「所有檔案存取權」而無法寫入公共 `/Rime`；設定精靈與應用設定現在會顯示權限狀態、提供重試與設定頁備援，未授權時不會啟動 Rime 或寫入檔案。

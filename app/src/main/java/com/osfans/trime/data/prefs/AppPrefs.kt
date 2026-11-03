@@ -19,6 +19,8 @@ import com.osfans.trime.ime.candidates.popup.PopupCandidatesLayout
 import com.osfans.trime.ime.candidates.popup.PopupCandidatesMode
 import com.osfans.trime.ime.composition.PopupPosition
 import com.osfans.trime.ime.core.InlinePreeditMode
+import com.osfans.trime.ime.unified.ChineseScript
+import com.osfans.trime.ime.unified.UnifiedInputMode
 import com.osfans.trime.util.InputMethodUtils
 import com.osfans.trime.util.appContext
 import java.lang.ref.WeakReference
@@ -124,6 +126,9 @@ class AppPrefs(
     ) : PreferenceDelegateOwner(shared, R.string.virtual_keyboard) {
         companion object {
             const val LANDSCAPE_MODE = "keyboard_landscape_mode"
+            const val UNIFIED_INPUT_MODE = "unified_input_mode"
+            const val CHINESE_SCRIPT = "unified_chinese_script"
+            const val HANDWRITING_STROKES = "unified_handwriting_strokes"
             const val SPLIT_SPACE_PERCENT = "keyboard_split_space"
 
             const val USE_SOFT_CURSOR = "use_soft_cursor"
@@ -173,6 +178,17 @@ class AppPrefs(
             ALWAYS(R.string.always),
         }
 
+        val unifiedInputMode = enum(
+            R.string.unified_input_mode,
+            UNIFIED_INPUT_MODE,
+            UnifiedInputMode.CHINESE_QWERTY,
+        )
+        val chineseScript = enum(
+            R.string.chinese_script,
+            CHINESE_SCRIPT,
+            ChineseScript.SIMPLIFIED,
+        )
+        val handwritingStrokes = string(HANDWRITING_STROKES, "")
         val landscapeMode = enum(R.string.enable_landscape_mode, LANDSCAPE_MODE, LandscapeMode.NEVER)
         val splitSpacePercent = int(
             R.string.split_space_percent,

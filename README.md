@@ -16,21 +16,26 @@ Rime IME for Android
 
 English | [简体中文](README_sc.md) | [繁體中文](README_tc.md)
 
-## 本分支（Capricornus007/trime）
+## This branch (Capricornus007/trime)
 
-在 osfans/trime 基礎上只加一件事：**拼音九宮格（T9）**。
+Android exposes one Trime input-method service. Its in-keyboard mode bar persists and switches
+exactly six modes: Chinese 26-key (`luna_pinyin`), Chinese 9-key (`t9_pinyin`), Chinese
+handwriting, Japanese QWERTY (`jaroomaji`), Japanese handwriting, and English QWERTY.
+Chinese modes share one entry and one data tree; the visible **简/繁** button changes the real
+Rime/OpenCC option and selects the matching `zh-Hani-CN` or `zh-Hani-TW` handwriting model.
 
-- 方案 `t9_pinyin`（`app/src/main/assets/shared/t9_pinyin.schema.yaml`）：鍵盤只送數字 2–9，
-  哪個字母由 `speller/algebra` 的拼音→數字轉寫加詞庫詞頻決定，不是鍵盤層猜。
-- 鍵盤 `t9_pinyin`（同檔 `preset_keyboards`）：鍵盤 id 等於方案 id，所以選了九宮格方案
-  會自動換上這面鍵盤。
-- 詞典 `t9_dict` 預設 `import_tables: [luna_pinyin]`，直接吃本專案自帶的詞頻與使用者
-  自己那份 PC↔手機通用的 rime 配置；要換更大的詞庫改這一行就好。
-- 包名 `org.capricornus007.trime`（不佔上游的 `com.osfans.trime`，兩支可共存）、
-  顯示名稱仍叫 **Trime**。
-- 發布：`Nightly` 每天 16:00 UTC 發佈到 `nightly` tag；`v*` tag 走正式 release。
-  兩者都用同一把固定金鑰簽 v1+v2+v3，且 CI 有「產物未簽名／簽錯鑰就紅」的收口
-  （`.github/actions/verify-apk-signing`）。
+Handwriting uses Google's official on-device ML Kit Digital Ink Recognition API. Models are
+downloaded on demand and the board reports downloading, failure/retry, and ready states. Strokes,
+including time data, are drawn on a real canvas; candidates can be committed, cleared, or undone
+one stroke at a time. English handwriting is available from English QWERTY's handwriting button.
+See [PRIVACY.md](PRIVACY.md) for model storage and network details.
+
+Japanese QWERTY is based on the Apache-2.0
+[`lazyfoxchan/rime-jaroomaji`](https://github.com/lazyfoxchan/rime-jaroomaji) schema pinned at
+`b743307c0251f388976662ee2f9e267043785116`; exact attribution and dictionary licensing are in
+`app/src/main/assets/shared/JAROOMAJI-NOTICE.txt`. No Gboard code, model, or resource is included.
+
+The application id is `org.capricornus007.trime`; the displayed name remains **Trime**.
 
 ## About
 

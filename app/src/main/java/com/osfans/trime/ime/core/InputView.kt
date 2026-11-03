@@ -36,6 +36,8 @@ import com.osfans.trime.ime.keyboard.KeyboardPrefs.isLandscapeMode
 import com.osfans.trime.ime.keyboard.KeyboardWindow
 import com.osfans.trime.ime.popup.PopupDelegate
 import com.osfans.trime.ime.symbol.LiquidWindow
+import com.osfans.trime.ime.unified.HandwritingWindow
+import com.osfans.trime.ime.unified.UnifiedModeController
 import com.osfans.trime.ime.window.BoardWindowManager
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -117,6 +119,8 @@ class InputView(
         bindSingleton { InputBarDelegate(di) }
         bindSingleton { CompactCandidateDelegate(di) }
         bindSingleton { KeyboardWindow(di) }
+        bindSingleton { UnifiedModeController(service) }
+        bindSingleton { HandwritingWindow(di) }
         bindSingleton { LiquidWindow(di) }
     }
 
@@ -127,6 +131,7 @@ class InputView(
     private val windowManager: BoardWindowManager by instance()
     private val inputBar: InputBarDelegate by instance()
     private val keyboardWindow: KeyboardWindow by instance()
+    private val handwritingWindow: HandwritingWindow by instance()
     private val liquidWindow: LiquidWindow by instance()
 
     private val candidatesMode by AppPrefs.defaultInstance().candidates.mode
@@ -182,6 +187,7 @@ class InputView(
 
         windowManager.cacheResidentWindow(keyboardWindow, createView = true)
         windowManager.cacheResidentWindow(liquidWindow)
+        windowManager.cacheResidentWindow(handwritingWindow)
         // show KeyboardWindow by default
         windowManager.attachWindow(KeyboardWindow)
 
@@ -320,6 +326,7 @@ class InputView(
     ) {
         updateEnterKeyLabel(info)
         broadcaster.onStartInput(info)
+        keyboardWindow.restoreUnifiedMode()
         if (!restarting) {
             windowManager.attachWindow(KeyboardWindow)
         }

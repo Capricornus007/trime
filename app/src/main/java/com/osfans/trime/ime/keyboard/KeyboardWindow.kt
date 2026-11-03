@@ -4,13 +4,17 @@
 
 package com.osfans.trime.ime.keyboard
 
+import android.app.AlertDialog
 import android.graphics.Point
 import android.os.Build
 import android.text.InputType
 import android.view.View
 import android.view.WindowInsets
 import android.view.inputmethod.EditorInfo
+import android.view.Gravity
+import android.widget.Button
 import android.widget.FrameLayout
+import android.widget.LinearLayout
 import androidx.core.content.ContextCompat
 import com.osfans.trime.R
 import com.osfans.trime.core.RimeMessage
@@ -25,6 +29,11 @@ import com.osfans.trime.ime.keyboard.KeyboardPrefs.isLandscapeMode
 import com.osfans.trime.ime.popup.PopupDelegate
 import com.osfans.trime.ime.window.BoardWindow
 import com.osfans.trime.ime.window.ResidentWindow
+import com.osfans.trime.ime.unified.HandwritingWindow
+import com.osfans.trime.ime.unified.UnifiedInputMode
+import com.osfans.trime.ime.unified.UnifiedModeCatalog
+import com.osfans.trime.ime.unified.UnifiedModeController
+import com.osfans.trime.ime.window.BoardWindowManager
 import com.osfans.trime.util.isLandscape
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -50,6 +59,9 @@ class KeyboardWindow(di: DI) :
     private val commonKeyboardActionListener: CommonKeyboardActionListener by instance()
     private val popup: PopupDelegate by instance()
     private val enterKeyDisplay: EnterKeyDisplayDelegate by instance()
+    private val unifiedController: UnifiedModeController by instance()
+    private val handwritingWindow: HandwritingWindow by instance()
+    private val windowManager: BoardWindowManager by instance()
 
     private val cursorCapsMode: Int
         get() =
@@ -70,6 +82,11 @@ class KeyboardWindow(di: DI) :
     val currentKeyboardHeight = _currentKeyboardHeight.asSharedFlow()
 
     private lateinit var keyboardView: FrameLayout
+    private lateinit var modeButton: Button
+    private lateinit var scriptButton: Button
+    private lateinit var handwritingButton: Button
+
+    private val unifiedToolbarHeight: Int get() = context.dp(44)
 
     companion object : ResidentWindow.Key {
         lateinit var currentKeyboard: Keyboard
@@ -109,7 +126,87 @@ class KeyboardWindow(di: DI) :
         keyboardView = context.frameLayout(R.id.keyboard_view)
         keyboardView.addOnLayoutChangeListener(onKeyboardViewLayoutChangeListener)
         attachKeyboard(evalKeyboard(".default"))
-        return keyboardView
+        return LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            addView(createUnifiedToolbar(), LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, unifiedToolbarHeight))
+            addView(keyboardView, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f))
+        }
+    }
+
+    private fun createUnifiedToolbar(): View = LinearLayout(context).apply {
+        orientation = LinearLayout.HORIZONTAL
+        gravity = Gravity.CENTER_VERTICAL
+        modeButton = Button(context).apply {
+            isAllCaps = false
+            setOnClickListener { showUnifiedModePicker() }
+        }
+        addView(modeButton, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 2f))
+        scriptButton = Button(context).apply {
+            isAllCaps = false
+            setOnClickListener {
+                unifiedController.toggleScript {
+                    refreshUnifiedToolbar()
+                    if (unifiedController.mode.isHandwriting) handwritingWindow.updateLanguage(null)
+                }
+            }
+        }
+        addView(scriptButton, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f))
+        handwritingButton = Button(context).apply {
+            isAllCaps = false
+            setText(R.string.handwriting)
+            contentDescription = context.getString(R.string.open_english_handwriting)
+            setOnClickListener { handwritingWindow.openEnglishHandwriting() }
+        }
+        addView(handwritingButton, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f))
+        refreshUnifiedToolbar()
+    }
+
+    fun refreshUnifiedToolbar() {
+        if (!::modeButton.isInitialized) return
+        modeButton.setText(unifiedController.mode.stringRes)
+        modeButton.contentDescription = context.getString(R.string.select_input_mode, modeButton.text)
+        scriptButton.text = "${context.getString(R.string.chinese_script_button)}: ${context.getString(unifiedController.script.stringRes)}"
+        scriptButton.contentDescription = context.getString(R.string.toggle_chinese_script, scriptButton.text)
+        scriptButton.visibility = if (unifiedController.mode.isChinese) View.VISIBLE else View.GONE
+        handwritingButton.visibility = if (unifiedController.mode == UnifiedInputMode.ENGLISH_QWERTY) View.VISIBLE else View.GONE
+    }
+
+    fun showUnifiedModePicker() {
+        val modes = UnifiedModeCatalog.modes
+        val selected = modes.indexOf(unifiedController.mode)
+        service.showDialog(
+            AlertDialog.Builder(context)
+                .setTitle(R.string.input_mode)
+                .setSingleChoiceItems(modes.map { context.getString(it.stringRes) }.toTypedArray(), selected) { dialog, which ->
+                    dialog.dismiss()
+                    switchUnifiedMode(modes[which])
+                }
+                .setNegativeButton(R.string.cancel, null)
+                .create(),
+        )
+    }
+
+    fun switchUnifiedMode(mode: UnifiedInputMode) {
+        unifiedController.selectMode(mode) {
+            refreshUnifiedToolbar()
+            if (mode.isHandwriting) {
+                handwritingWindow.updateLanguage(null)
+                windowManager.attachWindow(HandwritingWindow)
+            } else {
+                switchKeyboard(if (mode == UnifiedInputMode.CHINESE_T9) "t9_pinyin" else ".default")
+                windowManager.attachWindow(KeyboardWindow)
+            }
+        }
+    }
+
+    fun restoreUnifiedMode() {
+        unifiedController.restore {
+            refreshUnifiedToolbar()
+            if (unifiedController.mode.isHandwriting) {
+                handwritingWindow.updateLanguage(null)
+                windowManager.attachWindow(HandwritingWindow)
+            }
+        }
     }
 
     private fun detachCurrentView() {
@@ -176,7 +273,7 @@ class KeyboardWindow(di: DI) :
         }
 
         keyboard.also {
-            runBlocking { _currentKeyboardHeight.emit(it.keyboardHeight) }
+            runBlocking { _currentKeyboardHeight.emit(it.keyboardHeight + unifiedToolbarHeight) }
             if (it.isLock) lastLockKeyboardId = target
             dispatchCapsState(it::setShifted)
 

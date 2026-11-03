@@ -1,0 +1,83 @@
+# Rime schema
+# encoding: utf-8
+#
+# SPDX-FileCopyrightText: lazy fox chan
+# SPDX-License-Identifier: Apache-2.0
+#
+# Adapted from lazyfoxchan/rime-jaroomaji commit
+# b743307c0251f388976662ee2f9e267043785116. See JAROOMAJI-NOTICE.txt.
+
+schema:
+  schema_id: jaroomaji
+  name: 日本語ローマ字
+  version: "1.0-trime.1"
+  author:
+    - lazy fox chan
+    - Trime community
+  description: Japanese romaji input through the main Trime/Rime session.
+
+switches:
+  - name: ascii_mode
+    reset: 0
+    states: [ あ, A ]
+  - name: full_shape
+    reset: 0
+    states: [ 半角, 全角 ]
+
+engine:
+  processors:
+    - ascii_composer
+    - recognizer
+    - key_binder
+    - speller
+    - punctuator
+    - selector
+    - navigator
+    - express_editor
+  segmentors:
+    - ascii_segmentor
+    - matcher
+    - abc_segmentor
+    - punct_segmentor
+    - fallback_segmentor
+  translators:
+    - punct_translator
+    - script_translator
+  filters:
+    - uniquifier
+
+speller:
+  alphabet: abcdefghijklmnopqrstuvwxyz-
+  initials: abcdefghijklmnopqrstuvwxyz
+  delimiter: " '"
+  algebra:
+    - derive/shi/si/
+    - derive/chi/ti/
+    - derive/tsu/tu/
+    - derive/fu/hu/
+    - derive/ji/zi/
+    - derive/sha/sya/
+    - derive/shu/syu/
+    - derive/sho/syo/
+    - derive/cha/tya/
+    - derive/chu/tyu/
+    - derive/cho/tyo/
+    - derive/ja/zya/
+    - derive/ju/zyu/
+    - derive/jo/zyo/
+
+translator:
+  dictionary: jaroomaji
+  spelling_hints: 8
+  enable_sentence: true
+  enable_completion: true
+  enable_user_dict: true
+
+punctuator:
+  import_preset: default
+
+key_binder:
+  import_preset: default
+
+recognizer:
+  import_preset: default

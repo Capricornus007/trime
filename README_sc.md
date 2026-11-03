@@ -14,6 +14,12 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 [English](README.md) | 简体中文 | [繁體中文](README_tc.md)
 
+## 本分支的统一输入模式
+
+Android 只注册一个 Trime 输入法服务。键盘顶部的模式栏会持久保存并切换六种模式：中文26键、中文9键、中文手写、日文QWERTY、日文手写、英文QWERTY。中文是同一个入口；**简/繁**键切换真实的 Rime/OpenCC 选项，并为手写选择 `zh-Hani-CN` 或 `zh-Hani-TW` 模型。
+
+手写使用官方 ML Kit Digital Ink Recognition 19.0.0 本机 API，按需下载约20MB的语言模型，并显示下载中、失败/重试和已就绪状态。画布保存笔画坐标和时间，可选择候选、清除和退一笔。英文QWERTY内的手写按钮提供英文手写。详情见 [PRIVACY.md](PRIVACY.md)。日文方案来源和词典许可见 `app/src/main/assets/shared/JAROOMAJI-NOTICE.txt`。
+
 ## 关于
 
 源于开源的[注音仓颉输入法]前端，基于著名的 [RIME] 输入法框架，使用 JNI 的 C 语言和 Android 的 Java/Kotlin 语言书写，旨在保护汉语各地方言母语，音码、形码通用的输入法平台。

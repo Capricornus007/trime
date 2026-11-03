@@ -1,0 +1,19 @@
+Japanese QWERTY schema notice
+==============================
+
+The file jaroomaji.schema.yaml is adapted from:
+
+  lazyfoxchan/rime-jaroomaji
+  https://github.com/lazyfoxchan/rime-jaroomaji
+  pinned commit b743307c0251f388976662ee2f9e267043785116
+  Copyright lazy fox chan
+  License: Apache License 2.0
+  https://www.apache.org/licenses/LICENSE-2.0
+
+Changes for Trime: use the project punctuation/key-binding presets, default to
+Japanese mode, and use the compact jaroomaji.dict.yaml shipped here.
+
+jaroomaji.dict.yaml is an original compact Trime vocabulary licensed
+GPL-3.0-or-later as stated in that file. It does not copy rime-jaroomaji's
+Mozc (BSD/IPAdic), JMdict/KANJIDIC2 (CC BY-SA 4.0), or Mozc emoji dictionaries,
+and those dictionaries are not distributed or represented as Apache-2.0.
