@@ -61,6 +61,16 @@ android {
         compose = true
     }
 
+    signingConfigs {
+        getByName("debug") {
+            // Debug APK 也會直接裝到實機；與 release 一樣固定保留三種簽章，
+            // 不依 AGP 隨 minSdk／targetSdk 變動的預設值。
+            enableV1Signing = true
+            enableV2Signing = true
+            enableV3Signing = true
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true

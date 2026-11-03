@@ -7,6 +7,7 @@ package com.osfans.trime.ui.setup
 
 import android.app.PendingIntent
 import android.content.Intent
+import android.os.Bundle
 import android.widget.Button
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AlertDialog
