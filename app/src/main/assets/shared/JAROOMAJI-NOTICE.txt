@@ -1,19 +1,23 @@
-Japanese QWERTY schema notice
-==============================
+Japanese QWERTY schema and dictionary notice
+=============================================
 
-The file jaroomaji.schema.yaml is adapted from:
+Pinned upstream source:
 
   lazyfoxchan/rime-jaroomaji
   https://github.com/lazyfoxchan/rime-jaroomaji
-  pinned commit b743307c0251f388976662ee2f9e267043785116
-  Copyright lazy fox chan
-  License: Apache License 2.0
-  https://www.apache.org/licenses/LICENSE-2.0
+  commit b743307c0251f388976662ee2f9e267043785116
 
-Changes for Trime: use the project punctuation/key-binding presets, default to
-Japanese mode, and use the compact jaroomaji.dict.yaml shipped here.
+Files and licenses:
 
-jaroomaji.dict.yaml is an original compact Trime vocabulary licensed
-GPL-3.0-or-later as stated in that file. It does not copy rime-jaroomaji's
-Mozc (BSD/IPAdic), JMdict/KANJIDIC2 (CC BY-SA 4.0), or Mozc emoji dictionaries,
-and those dictionaries are not distributed or represented as Apache-2.0.
+* jaroomaji.schema.yaml, jaroomaji.dict.yaml, jaroomaji.user.dict.yaml, and
+  jaroomaji.kana_kigou.dict.yaml: lazy fox chan, Apache License 2.0. The full
+  license is bundled as LICENSE.jaroomaji.txt. Trime changes the schema's
+  initial ASCII switch to Japanese and narrows the aggregate imports.
+* jaroomaji.mozc_core.dict.yaml: a compact derived subset of the pinned
+  upstream jaroomaji.mozc.dict.yaml, retaining entries whose upstream weight
+  is at least 63000. It is NOT Apache-2.0. Its complete original header is
+  retained in the file and includes the Google Mozc 3-clause BSD terms,
+  NAIST IPAdic/ICOT terms, and Okinawa public-domain notice.
+
+No JMdict, KANJIDIC2, Mozc emoji, Gboard code, Gboard model, or Gboard resource
+is distributed. Each imported dictionary retains its original header.

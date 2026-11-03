@@ -4,63 +4,68 @@
  */
 package com.osfans.trime.ime.unified
 
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
-import org.junit.Test
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.nulls.shouldBeNull
+import io.kotest.matchers.shouldBe
 
-class HandwritingStateTest {
-    @Test
-    fun strokesPreserveTimeRoundTripAndUndoOneStroke() {
-        val state = StrokeState()
-        state.begin(StrokePoint(1.25f, 2.5f, 10L))
-        state.append(StrokePoint(3f, 4f, 11L))
-        state.end(StrokePoint(5f, 6f, 12L))
-        state.begin(StrokePoint(7f, 8f, 20L))
-        state.end(StrokePoint(9f, 10f, 21L))
+class HandwritingStateTest :
+    StringSpec({
+        "normalized strokes preserve timing through resize and undo" {
+            val state = StrokeState()
+            state.begin(StrokePoint(0.1f, 0.2f, 10L))
+            state.end(StrokePoint(0.5f, 0.6f, 12L))
+            state.begin(StrokePoint(0.7f, 0.8f, 20L))
+            state.end(StrokePoint(0.9f, 1f, 21L))
 
-        val restored = StrokeState.decode(state.encode())
-        assertEquals(2, restored.strokes.size)
-        assertEquals(12L, restored.strokes.first().last().timeMillis)
-        assertTrue(restored.undo())
-        assertEquals(1, restored.strokes.size)
-        assertTrue(restored.undo())
-        assertFalse(restored.undo())
-    }
+            val restored = StrokeState.decode(state.encode())
+            restored.strokes.size shouldBe 2
+            restored.strokes.first().last().timeMillis shouldBe 12L
+            restored.scaled(200, 100).first().last().run {
+                x shouldBe 100f
+                y shouldBe 60f
+            }
+            restored.undo() shouldBe true
+            restored.strokes.size shouldBe 1
+            restored.undo() shouldBe true
+            restored.undo() shouldBe false
+        }
 
-    @Test
-    fun cancelledStrokeIsNotRecognizedOrPersisted() {
-        val state = StrokeState()
-        state.begin(StrokePoint(1f, 2f, 3L))
-        state.append(StrokePoint(2f, 3f, 4L))
-        state.cancelActive()
-        assertTrue(state.isEmpty)
-        assertEquals("", state.encode())
-    }
+        "out-of-range legacy pixel coordinates are not restored" {
+            StrokeState.decode("125.0,42.0,10").isEmpty shouldBe true
+        }
 
-    @Test
-    fun reducerExposesDownloadFailureRetryReadyAndCandidates() {
-        val initial = HandwritingUiState()
-        val downloading = HandwritingStateReducer.downloading(initial)
-        assertEquals(ModelDownloadState.DOWNLOADING, downloading.model)
-        val failed = HandwritingStateReducer.failed(downloading, "offline")
-        assertEquals(ModelDownloadState.FAILED, failed.model)
-        assertEquals("offline", failed.error)
-        val ready = HandwritingStateReducer.ready(failed)
-        assertEquals(ModelDownloadState.READY, ready.model)
-        assertNull(ready.error)
-        val recognized = HandwritingStateReducer.recognized(ready, listOf("字", "字", "", "語"))
-        assertEquals(listOf("字", "語"), recognized.candidates)
-    }
+        "cancelled stroke is not recognized or persisted" {
+            val state = StrokeState()
+            state.begin(StrokePoint(0.1f, 0.2f, 3L))
+            state.append(StrokePoint(0.2f, 0.3f, 4L))
+            state.cancelActive()
+            state.isEmpty shouldBe true
+            state.encode() shouldBe ""
+        }
 
-    @Test
-    fun selectingCandidateReturnsTextAndClearsInk() {
-        val state = StrokeState()
-        state.begin(StrokePoint(0f, 0f, 1L))
-        state.end(StrokePoint(1f, 1f, 2L))
-        assertEquals("日本", HandwritingCandidateCommitPolicy.select("日本", state))
-        assertTrue(state.isEmpty)
-        assertNull(HandwritingCandidateCommitPolicy.select("", state))
-    }
-}
+        "model and recognition failures remain distinct" {
+            val downloading = HandwritingStateReducer.downloading(HandwritingUiState())
+            downloading.model shouldBe ModelDownloadState.DOWNLOADING
+            val modelFailed = HandwritingStateReducer.modelFailed(downloading, "offline")
+            modelFailed.model shouldBe ModelDownloadState.FAILED
+            modelFailed.modelError shouldBe "offline"
+            val ready = HandwritingStateReducer.ready(modelFailed)
+            ready.model shouldBe ModelDownloadState.READY
+            ready.modelError.shouldBeNull()
+            val recognitionFailed = HandwritingStateReducer.recognitionFailed(ready, "bad ink")
+            recognitionFailed.model shouldBe ModelDownloadState.READY
+            recognitionFailed.recognitionError shouldBe "bad ink"
+            val recognized = HandwritingStateReducer.recognized(recognitionFailed, listOf("字", "字", "", "語"))
+            recognized.candidates shouldBe listOf("字", "語")
+            recognized.recognitionError.shouldBeNull()
+        }
+
+        "candidate commit returns text and clears ink" {
+            val state = StrokeState()
+            state.begin(StrokePoint(0f, 0f, 1L))
+            state.end(StrokePoint(1f, 1f, 2L))
+            HandwritingCandidateCommitPolicy.select("日本", state) shouldBe "日本"
+            state.isEmpty shouldBe true
+            HandwritingCandidateCommitPolicy.select("", state).shouldBeNull()
+        }
+    })

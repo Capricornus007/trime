@@ -18,7 +18,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 Android 只注册一个 Trime 输入法服务。键盘顶部的模式栏会持久保存并切换六种模式：中文26键、中文9键、中文手写、日文QWERTY、日文手写、英文QWERTY。中文是同一个入口；**简/繁**键切换真实的 Rime/OpenCC 选项，并为手写选择 `zh-Hani-CN` 或 `zh-Hani-TW` 模型。
 
-手写使用官方 ML Kit Digital Ink Recognition 19.0.0 本机 API，按需下载约20MB的语言模型，并显示下载中、失败/重试和已就绪状态。画布保存笔画坐标和时间，可选择候选、清除和退一笔。英文QWERTY内的手写按钮提供英文手写。详情见 [PRIVACY.md](PRIVACY.md)。日文方案来源和词典许可见 `app/src/main/assets/shared/JAROOMAJI-NOTICE.txt`。
+手写使用官方 ML Kit Digital Ink Recognition 19.0.0 本机 API，仅提供中文和日文手写；按需下载约20MB的语言模型，并显示下载中、失败/重试和已就绪状态。画布保存笔画坐标和时间，可选择候选、清除和退一笔。详情见 [PRIVACY.md](PRIVACY.md)。日文方案来源和词典许可见 `app/src/main/assets/shared/JAROOMAJI-NOTICE.txt`。
 
 ## 关于
 

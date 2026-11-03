@@ -24,11 +24,11 @@ handwriting, Japanese QWERTY (`jaroomaji`), Japanese handwriting, and English QW
 Chinese modes share one entry and one data tree; the visible **简/繁** button changes the real
 Rime/OpenCC option and selects the matching `zh-Hani-CN` or `zh-Hani-TW` handwriting model.
 
-Handwriting uses Google's official on-device ML Kit Digital Ink Recognition API. Models are
-downloaded on demand and the board reports downloading, failure/retry, and ready states. Strokes,
-including time data, are drawn on a real canvas; candidates can be committed, cleared, or undone
-one stroke at a time. English handwriting is available from English QWERTY's handwriting button.
-See [PRIVACY.md](PRIVACY.md) for model storage and network details.
+Handwriting uses Google's official on-device ML Kit Digital Ink Recognition API for Chinese and
+Japanese. Models are downloaded on demand and the board reports downloading, failure/retry, and
+ready states. Strokes, including time data, are drawn on a real canvas; candidates can be
+committed, cleared, or undone one stroke at a time. See [PRIVACY.md](PRIVACY.md) for model storage,
+network, and ML Kit diagnostic-data details.
 
 Japanese QWERTY is based on the Apache-2.0
 [`lazyfoxchan/rime-jaroomaji`](https://github.com/lazyfoxchan/rime-jaroomaji) schema pinned at

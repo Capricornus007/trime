@@ -128,7 +128,6 @@ class AppPrefs(
             const val LANDSCAPE_MODE = "keyboard_landscape_mode"
             const val UNIFIED_INPUT_MODE = "unified_input_mode"
             const val CHINESE_SCRIPT = "unified_chinese_script"
-            const val HANDWRITING_STROKES = "unified_handwriting_strokes"
             const val SPLIT_SPACE_PERCENT = "keyboard_split_space"
 
             const val USE_SOFT_CURSOR = "use_soft_cursor"
@@ -188,7 +187,6 @@ class AppPrefs(
             CHINESE_SCRIPT,
             ChineseScript.SIMPLIFIED,
         )
-        val handwritingStrokes = string(HANDWRITING_STROKES, "")
         val landscapeMode = enum(R.string.enable_landscape_mode, LANDSCAPE_MODE, LandscapeMode.NEVER)
         val splitSpacePercent = int(
             R.string.split_space_percent,

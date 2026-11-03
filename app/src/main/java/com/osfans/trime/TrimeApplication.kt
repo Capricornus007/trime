@@ -182,6 +182,10 @@ class TrimeApplication : Application() {
                 )
             }
             val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(ctx)
+            // Ink moved to noBackupFilesDir; erase the short-lived legacy preference on upgrade.
+            if (sharedPreferences.contains("unified_handwriting_strokes")) {
+                sharedPreferences.edit { remove("unified_handwriting_strokes") }
+            }
 
             Timber.d("isDirectBootMode=$isDirectBootMode")
 

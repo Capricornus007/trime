@@ -7,38 +7,46 @@ package com.osfans.trime.ime.unified
 import com.google.mlkit.common.MlKitException
 import com.google.mlkit.common.model.DownloadConditions
 import com.google.mlkit.common.model.RemoteModelManager
-import com.google.mlkit.vision.digitalink.DigitalInkRecognition
-import com.google.mlkit.vision.digitalink.DigitalInkRecognitionModel
-import com.google.mlkit.vision.digitalink.DigitalInkRecognitionModelIdentifier
-import com.google.mlkit.vision.digitalink.DigitalInkRecognizer
-import com.google.mlkit.vision.digitalink.DigitalInkRecognizerOptions
-import com.google.mlkit.vision.digitalink.Ink
+import com.google.mlkit.vision.digitalink.recognition.DigitalInkRecognition
+import com.google.mlkit.vision.digitalink.recognition.DigitalInkRecognitionModel
+import com.google.mlkit.vision.digitalink.recognition.DigitalInkRecognitionModelIdentifier
+import com.google.mlkit.vision.digitalink.recognition.DigitalInkRecognizer
+import com.google.mlkit.vision.digitalink.recognition.DigitalInkRecognizerOptions
+import com.google.mlkit.vision.digitalink.recognition.Ink
 
-/** Owns one on-device recognizer and ignores stale callbacks after a language change. */
-class DigitalInkModelManager {
-    private val remoteModels = RemoteModelManager.getInstance()
-    private var generation = 0
+/** Lazily owns one on-device recognizer and rejects stale language and ink callbacks. */
+class DigitalInkModelManager(
+    private val isUserUnlocked: () -> Boolean,
+) {
+    private val remoteModels by lazy(LazyThreadSafetyMode.NONE) { RemoteModelManager.getInstance() }
+    private var modelGeneration = 0L
+    private var inkGeneration = 0L
     private var recognizer: DigitalInkRecognizer? = null
     private var activeTag: String? = null
 
     fun prepare(tag: String, onState: (HandwritingUiState) -> Unit) {
-        val request = ++generation
+        if (!isUserUnlocked()) {
+            onState(HandwritingStateReducer.modelFailed(HandwritingUiState(), "Unlock the device to load handwriting models"))
+            return
+        }
+        val request = ++modelGeneration
+        invalidateInk()
         closeRecognizer()
         activeTag = tag
         val identifier = try {
             DigitalInkRecognitionModelIdentifier.fromLanguageTag(tag)
         } catch (error: MlKitException) {
-            onState(HandwritingStateReducer.failed(HandwritingUiState(), error.localizedMessage))
+            onState(HandwritingStateReducer.modelFailed(HandwritingUiState(), error.localizedMessage))
             return
         }
         if (identifier == null) {
-            onState(HandwritingStateReducer.failed(HandwritingUiState(), "Unsupported language: $tag"))
+            onState(HandwritingStateReducer.modelFailed(HandwritingUiState(), "Unsupported language: $tag"))
             return
         }
         val model = DigitalInkRecognitionModel.builder(identifier).build()
         remoteModels.isModelDownloaded(model)
             .addOnSuccessListener { downloaded ->
-                if (request != generation) return@addOnSuccessListener
+                if (request != modelGeneration) return@addOnSuccessListener
                 if (downloaded) {
                     createRecognizer(model)
                     onState(HandwritingStateReducer.ready(HandwritingUiState()))
@@ -47,40 +55,42 @@ class DigitalInkModelManager {
                 }
             }
             .addOnFailureListener { error ->
-                if (request == generation) {
-                    onState(HandwritingStateReducer.failed(HandwritingUiState(), error.localizedMessage))
+                if (request == modelGeneration) {
+                    onState(HandwritingStateReducer.modelFailed(HandwritingUiState(), error.localizedMessage))
                 }
             }
     }
 
-    fun retry(onState: (HandwritingUiState) -> Unit) {
+    fun retryModel(onState: (HandwritingUiState) -> Unit) {
         activeTag?.let { prepare(it, onState) }
     }
 
     private fun download(
         model: DigitalInkRecognitionModel,
-        request: Int,
+        request: Long,
         onState: (HandwritingUiState) -> Unit,
     ) {
         onState(HandwritingStateReducer.downloading(HandwritingUiState()))
         remoteModels.download(model, DownloadConditions.Builder().build())
             .addOnSuccessListener {
-                if (request != generation) return@addOnSuccessListener
+                if (request != modelGeneration) return@addOnSuccessListener
                 createRecognizer(model)
                 onState(HandwritingStateReducer.ready(HandwritingUiState()))
             }
             .addOnFailureListener { error ->
-                if (request == generation) {
-                    onState(HandwritingStateReducer.failed(HandwritingUiState(), error.localizedMessage))
+                if (request == modelGeneration) {
+                    onState(HandwritingStateReducer.modelFailed(HandwritingUiState(), error.localizedMessage))
                 }
             }
     }
 
     private fun createRecognizer(model: DigitalInkRecognitionModel) {
         closeRecognizer()
-        recognizer = DigitalInkRecognition.getClient(
-            DigitalInkRecognizerOptions.builder(model).build(),
-        )
+        recognizer = DigitalInkRecognition.getClient(DigitalInkRecognizerOptions.builder(model).build())
+    }
+
+    fun invalidateInk() {
+        inkGeneration++
     }
 
     fun recognize(
@@ -93,30 +103,34 @@ class DigitalInkModelManager {
             onFailure("Model is not ready")
             return
         }
-        val request = generation
+        val modelRequest = modelGeneration
+        val inkRequest = ++inkGeneration
         val ink = Ink.builder().apply {
             strokes.forEach { stroke ->
                 if (stroke.isEmpty()) return@forEach
                 addStroke(
                     Ink.Stroke.builder().apply {
-                        stroke.forEach { point ->
-                            addPoint(Ink.Point.create(point.x, point.y, point.timeMillis))
-                        }
+                        stroke.forEach { point -> addPoint(Ink.Point.create(point.x, point.y, point.timeMillis)) }
                     }.build(),
                 )
             }
         }.build()
         client.recognize(ink)
             .addOnSuccessListener { result ->
-                if (request == generation) onSuccess(result.candidates.map { it.text })
+                if (modelRequest == modelGeneration && inkRequest == inkGeneration) {
+                    onSuccess(result.candidates.map { it.text })
+                }
             }
             .addOnFailureListener { error ->
-                if (request == generation) onFailure(error.localizedMessage)
+                if (modelRequest == modelGeneration && inkRequest == inkGeneration) {
+                    onFailure(error.localizedMessage)
+                }
             }
     }
 
     fun close() {
-        generation++
+        modelGeneration++
+        invalidateInk()
         activeTag = null
         closeRecognizer()
     }

@@ -36,6 +36,8 @@ import com.osfans.trime.util.InputMethodUtils
 import com.osfans.trime.util.buildIntentFromAction
 import com.osfans.trime.util.buildIntentFromArgument
 import com.osfans.trime.util.customFormatDateTime
+import com.osfans.trime.ime.unified.UnifiedInputMode
+import com.osfans.trime.ime.unified.UnifiedModeController
 import com.osfans.trime.util.isAsciiPrintable
 import com.osfans.trime.util.toast
 import kotlinx.coroutines.launch
@@ -54,6 +56,7 @@ class CommonKeyboardActionListener(override val di: DI) : DIAware {
     private val rime: RimeSession by instance()
     private val windowManager: BoardWindowManager by instance()
     private val keyboardWindow: KeyboardWindow by instance()
+    private val unifiedModeController: UnifiedModeController by instance()
     private val liquidWindow: LiquidWindow by instance()
 
     private val prefs = AppPrefs.defaultInstance()
@@ -214,6 +217,7 @@ class CommonKeyboardActionListener(override val di: DI) : DIAware {
             // ambiguous letter (hao -> gao), starting a fresh composition,
             // or appending -- never committing as bare text.
             private fun handlePickLetter(arg: String) {
+                if (unifiedModeController.mode != UnifiedInputMode.CHINESE_T9) return
                 val letter = arg.firstOrNull()?.lowercaseChar() ?: return
                 if (!T9CorrectionState.pickLetter(rime, letter)) {
                     service.commitText(letter.toString())

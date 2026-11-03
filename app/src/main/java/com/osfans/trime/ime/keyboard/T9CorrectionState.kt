@@ -47,6 +47,10 @@ object T9CorrectionState {
      * the correction is really underway. */
     @Volatile
     private var pending: Boolean = false
+    @Volatile
+    private var generation: Long = 0
+    @Volatile
+    private var cancelledTargetSchema: String? = null
 
     /** True from the moment a pick/correction is requested until the word
      * commits (or the user backs out). While this holds, the 9-key grid
@@ -92,7 +96,17 @@ object T9CorrectionState {
      * flags disagreeing with the engine's actual schema and the visible
      * keyboard.
      */
+    fun cancelForModeSwitch(targetSchema: String? = null) {
+        cancelledTargetSchema = targetSchema
+        generation++
+        active = false
+        pending = false
+        lastComposition = CompositionProto()
+    }
+
     fun reset() {
+        generation++
+        cancelledTargetSchema = null
         active = false
         pending = false
         lastComposition = CompositionProto()
@@ -210,6 +224,8 @@ object T9CorrectionState {
         }
         pending = true
         active = false
+        cancelledTargetSchema = null
+        val request = ++generation
         // The first pick of a word has to load the letter schema, which takes
         // long enough (~450ms, dictionaries reopen) that the gesture looks
         // like it did nothing. Show the text it will produce immediately;
@@ -218,14 +234,18 @@ object T9CorrectionState {
             pendingPreview?.invoke(corrected)
         }
         rime.launchOnReady { api ->
+            if (request != generation) return@launchOnReady
             api.clearComposition()
-            if (!alreadyOnLetterSchema) {
-                api.selectSchema(LETTER_SCHEMA)
+            if (!alreadyOnLetterSchema) api.selectSchema(LETTER_SCHEMA)
+            if (request != generation) {
+                cancelledTargetSchema?.let { api.selectSchema(it) }
+                return@launchOnReady
             }
-            // multi-syllable preedits carry Rime's display separator (a
-            // space); retype it as the apostrophe, the typeable syllable
-            // divider, so the boundary survives the round trip.
             api.simulateKeySequence(corrected.replace(' ', '\''))
+            if (request != generation) {
+                api.clearComposition()
+                cancelledTargetSchema?.let { api.selectSchema(it) }
+            }
         }
     }
 
@@ -233,8 +253,11 @@ object T9CorrectionState {
         active = false
         pending = false
         val target = originSchema
+        val request = ++generation
         rime.launchOnReady { api ->
+            if (request != generation) return@launchOnReady
             api.selectSchema(target)
+            if (request != generation) cancelledTargetSchema?.let { api.selectSchema(it) }
         }
     }
 }

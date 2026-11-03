@@ -119,7 +119,7 @@ class InputView(
         bindSingleton { InputBarDelegate(di) }
         bindSingleton { CompactCandidateDelegate(di) }
         bindSingleton { KeyboardWindow(di) }
-        bindSingleton { UnifiedModeController(service) }
+        bindInstance<UnifiedModeController> { service.unifiedModeController }
         bindSingleton { HandwritingWindow(di) }
         bindSingleton { LiquidWindow(di) }
     }
@@ -132,6 +132,7 @@ class InputView(
     private val inputBar: InputBarDelegate by instance()
     private val keyboardWindow: KeyboardWindow by instance()
     private val handwritingWindow: HandwritingWindow by instance()
+    private val unifiedModeController: UnifiedModeController by instance()
     private val liquidWindow: LiquidWindow by instance()
 
     private val candidatesMode by AppPrefs.defaultInstance().candidates.mode
@@ -188,8 +189,11 @@ class InputView(
         windowManager.cacheResidentWindow(keyboardWindow, createView = true)
         windowManager.cacheResidentWindow(liquidWindow)
         windowManager.cacheResidentWindow(handwritingWindow)
-        // show KeyboardWindow by default
-        windowManager.attachWindow(KeyboardWindow)
+        if (unifiedModeController.shouldShowHandwriting) {
+            windowManager.attachWindow(HandwritingWindow)
+        } else {
+            windowManager.attachWindow(KeyboardWindow)
+        }
 
         keyboardBackground.imageDrawable = scope.drawable("keyboard_background")
 
@@ -325,9 +329,11 @@ class InputView(
         restarting: Boolean = false,
     ) {
         updateEnterKeyLabel(info)
+        handwritingWindow.beginEditorSession(info, restarting)
         broadcaster.onStartInput(info)
-        keyboardWindow.restoreUnifiedMode()
-        if (!restarting) {
+        if (unifiedModeController.shouldShowHandwriting) {
+            windowManager.attachWindow(HandwritingWindow)
+        } else {
             windowManager.attachWindow(KeyboardWindow)
         }
     }
@@ -341,7 +347,7 @@ class InputView(
             is RimeMessage.SchemaMessage -> {
                 broadcaster.onRimeSchemaUpdated(it.data)
 
-                windowManager.attachWindow(KeyboardWindow)
+                windowManager.attachWindow(if (unifiedModeController.shouldShowHandwriting) HandwritingWindow else KeyboardWindow)
             }
 
             is RimeMessage.OptionMessage -> {
@@ -388,6 +394,7 @@ class InputView(
         // cancel the notification job and clear all broadcast receivers,
         // implies that InputView should not be attached again after detached.
         updateWindowViewHeightJob.cancel()
+        handwritingWindow.dispose()
         popup.root.removeAllViews()
         broadcaster.clear()
         super.onDetachedFromWindow()

@@ -9,7 +9,7 @@ import java.util.Locale
 data class StrokePoint(val x: Float, val y: Float, val timeMillis: Long)
 typealias HandwritingStroke = List<StrokePoint>
 
-/** Mutable handwriting session with deterministic undo and rotation-safe serialization. */
+/** Points are normalized to the canvas (0..1), so rotation and resizing preserve geometry. */
 class StrokeState(initial: List<HandwritingStroke> = emptyList()) {
     private val completed = initial.mapTo(mutableListOf()) { it.toList() }
     private var active = mutableListOf<StrokePoint>()
@@ -19,16 +19,17 @@ class StrokeState(initial: List<HandwritingStroke> = emptyList()) {
     val isEmpty: Boolean get() = completed.isEmpty() && active.isEmpty()
 
     fun begin(point: StrokePoint) {
-        active = mutableListOf(point)
+        active = mutableListOf(point.normalized())
     }
 
     fun append(point: StrokePoint) {
-        if (active.isNotEmpty()) active.add(point)
+        if (active.isNotEmpty()) active.add(point.normalized())
     }
 
     fun end(point: StrokePoint) {
         if (active.isEmpty()) return
-        if (active.last() != point) active.add(point)
+        val normalized = point.normalized()
+        if (active.last() != normalized) active.add(normalized)
         completed.add(active.toList())
         active = mutableListOf()
     }
@@ -52,11 +53,19 @@ class StrokeState(initial: List<HandwritingStroke> = emptyList()) {
         active.clear()
     }
 
-    fun encode(): String = completed.joinToString("|") { stroke ->
-        stroke.joinToString(";") { point ->
-            String.format(Locale.ROOT, "%.3f,%.3f,%d", point.x, point.y, point.timeMillis)
+    fun scaled(width: Int, height: Int): List<HandwritingStroke> = completed.map { stroke ->
+        stroke.map { point ->
+            StrokePoint(point.x * width, point.y * height, point.timeMillis)
         }
     }
+
+    fun encode(): String = completed.joinToString("|") { stroke ->
+        stroke.joinToString(";") { point ->
+            String.format(Locale.ROOT, "%.6f,%.6f,%d", point.x, point.y, point.timeMillis)
+        }
+    }
+
+    private fun StrokePoint.normalized() = copy(x = x.coerceIn(0f, 1f), y = y.coerceIn(0f, 1f))
 
     companion object {
         fun decode(raw: String?): StrokeState {
@@ -65,8 +74,8 @@ class StrokeState(initial: List<HandwritingStroke> = emptyList()) {
                 val points = encodedStroke.split(';').mapNotNull point@ { encodedPoint ->
                     val fields = encodedPoint.split(',')
                     if (fields.size != 3) return@point null
-                    val x = fields[0].toFloatOrNull() ?: return@point null
-                    val y = fields[1].toFloatOrNull() ?: return@point null
+                    val x = fields[0].toFloatOrNull()?.takeIf { it in 0f..1f } ?: return@point null
+                    val y = fields[1].toFloatOrNull()?.takeIf { it in 0f..1f } ?: return@point null
                     val time = fields[2].toLongOrNull() ?: return@point null
                     StrokePoint(x, y, time)
                 }
@@ -81,27 +90,40 @@ enum class ModelDownloadState { NOT_DOWNLOADED, DOWNLOADING, READY, FAILED }
 
 data class HandwritingUiState(
     val model: ModelDownloadState = ModelDownloadState.NOT_DOWNLOADED,
-    val error: String? = null,
+    val modelError: String? = null,
+    val recognitionError: String? = null,
     val candidates: List<String> = emptyList(),
 )
 
 object HandwritingStateReducer {
     fun downloading(old: HandwritingUiState) = old.copy(
         model = ModelDownloadState.DOWNLOADING,
-        error = null,
+        modelError = null,
+        recognitionError = null,
         candidates = emptyList(),
     )
 
-    fun ready(old: HandwritingUiState) = old.copy(model = ModelDownloadState.READY, error = null)
+    fun ready(old: HandwritingUiState) = old.copy(
+        model = ModelDownloadState.READY,
+        modelError = null,
+    )
 
-    fun failed(old: HandwritingUiState, message: String?) = old.copy(
+    fun modelFailed(old: HandwritingUiState, message: String?) = old.copy(
         model = ModelDownloadState.FAILED,
-        error = message,
+        modelError = message,
+        recognitionError = null,
         candidates = emptyList(),
     )
 
-    fun recognized(old: HandwritingUiState, candidates: List<String>) =
-        old.copy(candidates = candidates.distinct().filter(String::isNotBlank).take(8), error = null)
+    fun recognitionFailed(old: HandwritingUiState, message: String?) = old.copy(
+        recognitionError = message,
+        candidates = emptyList(),
+    )
+
+    fun recognized(old: HandwritingUiState, candidates: List<String>) = old.copy(
+        candidates = candidates.distinct().filter(String::isNotBlank).take(8),
+        recognitionError = null,
+    )
 }
 
 object HandwritingCandidateCommitPolicy {

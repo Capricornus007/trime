@@ -55,6 +55,7 @@ import com.osfans.trime.util.findSectionFrom
 import com.osfans.trime.util.forceShowSelf
 import com.osfans.trime.util.monitorCursorAnchor
 import com.osfans.trime.util.styledFloat
+import com.osfans.trime.ime.unified.UnifiedModeController
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
@@ -71,6 +72,8 @@ import timber.log.Timber
 open class TrimeInputMethodService : LifecycleInputMethodService() {
     private lateinit var rime: RimeSession
     private val jobs = Channel<Job>(capacity = Channel.UNLIMITED)
+    lateinit var unifiedModeController: UnifiedModeController
+        private set
 
     private val prefs = AppPrefs.defaultInstance()
     private lateinit var decorView: View
@@ -183,6 +186,7 @@ open class TrimeInputMethodService : LifecycleInputMethodService() {
 
     override fun onCreate() {
         rime = RimeDaemon.createSession(javaClass.name)
+        unifiedModeController = UnifiedModeController(this)
         lifecycleScope.launch {
             jobs.consumeEach { it.join() }
         }
@@ -332,7 +336,7 @@ open class TrimeInputMethodService : LifecycleInputMethodService() {
         RimeDaemon.destroySession(javaClass.name)
     }
 
-    private fun handleReturnKey() {
+    fun handleReturnKey() {
         currentInputEditorInfo.run {
             if (inputType and InputType.TYPE_MASK_CLASS == InputType.TYPE_NULL ||
                 imeOptions.hasFlag(EditorInfo.IME_FLAG_NO_ENTER_ACTION)
@@ -538,6 +542,7 @@ open class TrimeInputMethodService : LifecycleInputMethodService() {
     ) {
         composingText = ""
         Timber.d("onStartInput: restarting=$restarting")
+        unifiedModeController.onStartInput(attribute)
         val isNullType = attribute.inputType and InputType.TYPE_MASK_CLASS == InputType.TYPE_NULL
         postRimeJob {
             if (restarting) {

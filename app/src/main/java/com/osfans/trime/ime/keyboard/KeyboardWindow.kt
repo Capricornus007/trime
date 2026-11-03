@@ -84,7 +84,6 @@ class KeyboardWindow(di: DI) :
     private lateinit var keyboardView: FrameLayout
     private lateinit var modeButton: Button
     private lateinit var scriptButton: Button
-    private lateinit var handwritingButton: Button
 
     private val unifiedToolbarHeight: Int get() = context.dp(44)
 
@@ -99,7 +98,6 @@ class KeyboardWindow(di: DI) :
     private var currentKeyboardId = ""
     private var lastKeyboardId = ""
     private var lastLockKeyboardId = ""
-    private var tempAsciiMode: Boolean? = null
     private val cachedKeyboards = mutableMapOf<String, Pair<Keyboard, KeyboardView>>()
     private val activeKeyboard: Keyboard? get() = cachedKeyboards[currentKeyboardId]?.first
     private val currentKeyboardView: KeyboardView? get() = cachedKeyboards[currentKeyboardId]?.second
@@ -146,18 +144,11 @@ class KeyboardWindow(di: DI) :
             setOnClickListener {
                 unifiedController.toggleScript {
                     refreshUnifiedToolbar()
-                    if (unifiedController.mode.isHandwriting) handwritingWindow.updateLanguage(null)
+                    handwritingWindow.requestLanguageRefresh()
                 }
             }
         }
         addView(scriptButton, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f))
-        handwritingButton = Button(context).apply {
-            isAllCaps = false
-            setText(R.string.handwriting)
-            contentDescription = context.getString(R.string.open_english_handwriting)
-            setOnClickListener { handwritingWindow.openEnglishHandwriting() }
-        }
-        addView(handwritingButton, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f))
         refreshUnifiedToolbar()
     }
 
@@ -168,7 +159,6 @@ class KeyboardWindow(di: DI) :
         scriptButton.text = "${context.getString(R.string.chinese_script_button)}: ${context.getString(unifiedController.script.stringRes)}"
         scriptButton.contentDescription = context.getString(R.string.toggle_chinese_script, scriptButton.text)
         scriptButton.visibility = if (unifiedController.mode.isChinese) View.VISIBLE else View.GONE
-        handwritingButton.visibility = if (unifiedController.mode == UnifiedInputMode.ENGLISH_QWERTY) View.VISIBLE else View.GONE
     }
 
     fun showUnifiedModePicker() {
@@ -186,25 +176,23 @@ class KeyboardWindow(di: DI) :
         )
     }
 
+    private fun unifiedQwertyKeyboardId(): String = when {
+        "qwerty" in presetKeyboardIds -> "qwerty"
+        "default" in presetKeyboardIds -> "default"
+        else -> presetKeyboardIds.firstOrNull().orEmpty()
+    }
+
     fun switchUnifiedMode(mode: UnifiedInputMode) {
         unifiedController.selectMode(mode) {
             refreshUnifiedToolbar()
-            if (mode.isHandwriting) {
-                handwritingWindow.updateLanguage(null)
+            val editorTarget = unifiedController.editorKeyboardTarget
+            if (mode.isHandwriting && editorTarget == null && unifiedController.shouldShowHandwriting) {
+                handwritingWindow.requestLanguageRefresh()
                 windowManager.attachWindow(HandwritingWindow)
             } else {
-                switchKeyboard(if (mode == UnifiedInputMode.CHINESE_T9) "t9_pinyin" else ".default")
+                val target = editorTarget ?: if (mode == UnifiedInputMode.CHINESE_T9) "t9_pinyin" else unifiedQwertyKeyboardId()
+                switchKeyboard(target)
                 windowManager.attachWindow(KeyboardWindow)
-            }
-        }
-    }
-
-    fun restoreUnifiedMode() {
-        unifiedController.restore {
-            refreshUnifiedToolbar()
-            if (unifiedController.mode.isHandwriting) {
-                handwritingWindow.updateLanguage(null)
-                windowManager.attachWindow(HandwritingWindow)
             }
         }
     }
@@ -251,6 +239,7 @@ class KeyboardWindow(di: DI) :
     }
 
     private fun selectKeyboardConfig(name: String): TextKeyboard? {
+        if (name == T9CorrectionState.T9_SCHEMA) return UnifiedKeyboardLayouts.chineseT9
         val config = theme.presetKeyboards[name] ?: theme.presetKeyboards["default"]
         val importPreset = config?.importPreset
         if (!importPreset.isNullOrEmpty()) {
@@ -278,7 +267,8 @@ class KeyboardWindow(di: DI) :
             dispatchCapsState(it::setShifted)
 
             val currentMode = rime.run { statusCached }.isAsciiMode
-            val targetMode = if (it.resetAsciiMode) it.asciiMode else it.lastAsciiMode
+            val targetMode = unifiedController.asciiOverrideForKeyboard(target)
+                ?: if (it.resetAsciiMode) it.asciiMode else it.lastAsciiMode
 
             if (currentMode != targetMode) {
                 service.postRimeJob {
@@ -301,6 +291,7 @@ class KeyboardWindow(di: DI) :
     private fun smartMatchKeyboard(): String {
         // 主题的布局中包含方案id，直接采用
         val currentSchema = rime.run { statusCached }.schemaId
+        if (currentSchema == T9CorrectionState.T9_SCHEMA) return T9CorrectionState.T9_SCHEMA
         if (presetKeyboardIds.contains(currentSchema)) {
             return currentSchema
         }
@@ -336,11 +327,13 @@ class KeyboardWindow(di: DI) :
                 ".last_lock" -> lastLockKeyboardId
 
                 ".ascii" -> {
-                    var ascii = activeKeyboard?.asciiKeyboard
-                    if (ascii.isNullOrEmpty()) {
-                        ascii = lastLockKeyboardId
+                    val configured = activeKeyboard?.asciiKeyboard.orEmpty()
+                    when {
+                        configured in presetKeyboardIds -> configured
+                        "qwerty" in presetKeyboardIds -> "qwerty"
+                        "default" in presetKeyboardIds -> "default"
+                        else -> presetKeyboardIds.firstOrNull().orEmpty()
                     }
-                    if (presetKeyboardIds.contains(ascii)) ascii else currentKeyboardId
                 }
 
                 else -> {
@@ -389,11 +382,6 @@ class KeyboardWindow(di: DI) :
     }
 
     override fun onStartInput(info: EditorInfo) {
-        // trime-9key: a new input session can't inherit a half-finished
-        // letter-pick from the previous one -- the process may have been
-        // killed mid-session, which would leave the flags, the engine's
-        // schema and the visible keyboard disagreeing.
-        T9CorrectionState.reset()
         val targetKeyboard =
             when (info.imeOptions and EditorInfo.IME_FLAG_FORCE_ASCII) {
                 EditorInfo.IME_FLAG_FORCE_ASCII -> ".ascii"
@@ -422,43 +410,10 @@ class KeyboardWindow(di: DI) :
                     }
                 }
             }
-        // trime-9key: an ordinary text field ("") keeps whatever layout was
-        // last locked, which after an IME restart can disagree with the
-        // schema the engine actually reloaded -- e.g. the qwerty grid over
-        // the 9-key schema, where the letter keys don't match the codes
-        // being typed. Re-pair them when the schema owns a layout of its own.
-        val schemaId = rime.run { statusCached }.schemaId
-        if (targetKeyboard.isEmpty() &&
-            presetKeyboardIds.contains(schemaId) &&
-            currentKeyboardId != schemaId
-        ) {
-            switchKeyboard(schemaId)
-            return
+        val target = targetKeyboard.ifEmpty {
+            if (unifiedController.mode == UnifiedInputMode.CHINESE_T9) "t9_pinyin" else unifiedQwertyKeyboardId()
         }
-        switchKeyboard(targetKeyboard)
-        val isAsciiMode = rime.run { statusCached }.isAsciiMode
-        if (targetKeyboard == ".ascii" || targetKeyboard == "number") {
-            if (tempAsciiMode == null) {
-                tempAsciiMode = isAsciiMode
-            }
-            if (!isAsciiMode) {
-                service.postRimeJob { setRuntimeOption("ascii_mode", true) }
-            }
-        } else {
-            tempAsciiMode?.let { saved ->
-                if (isAsciiMode != saved) {
-                    service.postRimeJob { setRuntimeOption("ascii_mode", saved) }
-                }
-                tempAsciiMode = null
-            } ?: activeKeyboard?.let {
-                if (theme.style.resetAsciiModeOnFocusChange) {
-                    val targetMode = if (it.resetAsciiMode) it.asciiMode else it.lastAsciiMode
-                    if (isAsciiMode != targetMode) {
-                        service.postRimeJob { setRuntimeOption("ascii_mode", targetMode) }
-                    }
-                }
-            }
-        }
+        switchKeyboard(target)
     }
 
     private fun dispatchCapsState(setShift: (Boolean, Boolean) -> Unit) {
@@ -498,7 +453,8 @@ class KeyboardWindow(di: DI) :
         // Use the id carried by the event itself. smartMatchKeyboard reads
         // statusCached, which often hasn't caught up when this fires and
         // would re-match the OLD schema's layout.
-        switchKeyboard(if (presetKeyboardIds.contains(schema.id)) schema.id else "default")
+        val target = if (schema.id == T9CorrectionState.T9_SCHEMA || presetKeyboardIds.contains(schema.id)) schema.id else "default"
+        switchKeyboard(target)
     }
 
     override fun onRimeOptionUpdated(value: RimeMessage.OptionMessage.Data) {
@@ -518,6 +474,10 @@ class KeyboardWindow(di: DI) :
                         .listener
                         .onAction(theme.resolveAction(what))
                 }
+            }
+
+            option == "ascii_mode" && value.value != unifiedController.effectiveAsciiMode -> {
+                service.postRimeJob { setRuntimeOption("ascii_mode", unifiedController.effectiveAsciiMode) }
             }
 
             option == "ascii_mode" && !value.value -> {

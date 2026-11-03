@@ -277,7 +277,6 @@
     <string name="select_input_mode">Select input mode. Current: %1$s</string>
     <string name="toggle_chinese_script">Switch simplified or traditional Chinese. Current: %1$s</string>
     <string name="handwriting">Handwriting</string>
-    <string name="open_english_handwriting">Open English handwriting</string>
     <string name="keyboard">Keyboard</string>
     <string name="retry">Retry</string>
     <string name="space">Space</string>
@@ -293,4 +292,6 @@
     <string name="handwriting_clear">Clear</string>
     <string name="handwriting_recognize">Recognize</string>
     <string name="commit_handwriting_candidate">Commit handwriting candidate %1$s</string>
+    <string name="recognition_failed">Recognition failed</string>
+    <string name="handwriting_stroke_added">Centered handwriting stroke added</string>
 </resources>

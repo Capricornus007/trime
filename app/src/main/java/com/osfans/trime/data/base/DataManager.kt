@@ -37,6 +37,7 @@ object DataManager {
           - schema: jaroomaji
     """
 
+
     private val lock = ReentrantLock()
 
     private val json by lazy { Json }
@@ -122,9 +123,11 @@ object DataManager {
 
         val custom = userDataDir.resolve(DEFAULT_CUSTOM_FILE_NAME)
         if (!custom.exists()) {
-            if (custom.createNewFile()) {
-                custom.writeText(SCHEMA_LIST_CUSTOM_PATCH.trimIndent())
-            }
+            if (custom.createNewFile()) custom.writeText(SCHEMA_LIST_CUSTOM_PATCH.trimIndent())
+        } else {
+            val original = custom.readText()
+            val migrated = RequiredSchemaMigration.migrate(original, SCHEMA_LIST_CUSTOM_PATCH)
+            if (migrated != original) custom.writeText(migrated)
         }
 
         Timber.d("Synced!")

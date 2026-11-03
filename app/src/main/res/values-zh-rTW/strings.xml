@@ -277,7 +277,6 @@
     <string name="select_input_mode">選擇輸入模式，目前：%1$s</string>
     <string name="toggle_chinese_script">切換簡體或繁體，目前：%1$s</string>
     <string name="handwriting">手寫</string>
-    <string name="open_english_handwriting">開啟英文手寫</string>
     <string name="keyboard">鍵盤</string>
     <string name="retry">重試</string>
     <string name="space">空格</string>
@@ -293,4 +292,6 @@
     <string name="handwriting_clear">清除</string>
     <string name="handwriting_recognize">辨識</string>
     <string name="commit_handwriting_candidate">上屏手寫候選 %1$s</string>
+    <string name="recognition_failed">辨識失敗</string>
+    <string name="handwriting_stroke_added">已加入置中手寫筆畫</string>
 </resources>
