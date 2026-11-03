@@ -79,12 +79,14 @@ class HandwritingCanvasView(context: Context) : View(context) {
                 onInkChanged?.invoke()
                 state.begin(currentPoint)
             }
+
             MotionEvent.ACTION_MOVE -> {
                 for (index in 0 until event.historySize) {
                     state.append(point(event.getHistoricalX(index), event.getHistoricalY(index), event.getHistoricalEventTime(index)))
                 }
                 state.append(currentPoint)
             }
+
             MotionEvent.ACTION_UP -> {
                 state.end(currentPoint)
                 parent?.requestDisallowInterceptTouchEvent(false)
@@ -93,10 +95,12 @@ class HandwritingCanvasView(context: Context) : View(context) {
                 completingTouch = false
                 onStrokeFinished?.invoke()
             }
+
             MotionEvent.ACTION_CANCEL -> {
                 state.cancelActive()
                 parent?.requestDisallowInterceptTouchEvent(false)
             }
+
             else -> return false
         }
         invalidate()

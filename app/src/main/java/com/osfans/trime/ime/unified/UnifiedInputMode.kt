@@ -35,8 +35,7 @@ enum class UnifiedInputMode(
     }
 
     companion object {
-        fun fromPersisted(value: String?): UnifiedInputMode =
-            entries.firstOrNull { it.name == value } ?: CHINESE_QWERTY
+        fun fromPersisted(value: String?): UnifiedInputMode = entries.firstOrNull { it.name == value } ?: CHINESE_QWERTY
     }
 }
 
@@ -52,8 +51,7 @@ enum class ChineseScript(
     fun toggled(): ChineseScript = if (this == SIMPLIFIED) TRADITIONAL else SIMPLIFIED
 
     companion object {
-        fun fromPersisted(value: String?): ChineseScript =
-            entries.firstOrNull { it.name == value } ?: SIMPLIFIED
+        fun fromPersisted(value: String?): ChineseScript = entries.firstOrNull { it.name == value } ?: SIMPLIFIED
     }
 }
 
@@ -72,12 +70,14 @@ object UnifiedModeCatalog {
         asciiMode = mode.forceAscii,
         runtimeOptions = when {
             mode == UnifiedInputMode.CHINESE_T9 -> mapOf("simplification" to script.simplified)
+
             mode.isChinese -> mapOf(
                 "zh_hans" to script.simplified,
                 "zh_hant" to !script.simplified,
                 "zh_hant_hk" to false,
                 "zh_hant_tw" to false,
             )
+
             else -> emptyMap()
         },
         modelLanguageTag = mode.modelTag(script),

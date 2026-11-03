@@ -47,8 +47,10 @@ object T9CorrectionState {
      * the correction is really underway. */
     @Volatile
     private var pending: Boolean = false
+
     @Volatile
     private var generation: Long = 0
+
     @Volatile
     private var cancelledTargetSchema: String? = null
 

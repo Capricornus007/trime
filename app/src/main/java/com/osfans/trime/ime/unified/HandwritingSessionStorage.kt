@@ -40,8 +40,12 @@ class HandwritingSessionStorage(private val directory: File) {
 
     companion object {
         fun editorToken(editor: EditorInfo): String = editorToken(
-            editor.packageName?.toString(), editor.fieldId, editor.fieldName, editor.inputType,
-            editor.imeOptions, editor.privateImeOptions,
+            editor.packageName?.toString(),
+            editor.fieldId,
+            editor.fieldName,
+            editor.inputType,
+            editor.imeOptions,
+            editor.privateImeOptions,
         )
 
         internal fun editorToken(
@@ -52,7 +56,12 @@ class HandwritingSessionStorage(private val directory: File) {
             imeOptions: Int,
             privateImeOptions: String?,
         ): String = listOf(
-            packageName, fieldId, fieldName, inputType, imeOptions, privateImeOptions,
+            packageName,
+            fieldId,
+            fieldName,
+            inputType,
+            imeOptions,
+            privateImeOptions,
         ).joinToString("\u001f") { it?.toString().orEmpty() }
     }
 }

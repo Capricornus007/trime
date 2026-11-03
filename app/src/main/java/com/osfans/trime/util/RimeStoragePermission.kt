@@ -33,16 +33,15 @@ object RimeStoragePermissionPolicy {
         hasLegacyWriteAccess: Boolean,
     ): Boolean = if (sdkInt >= ANDROID_R) hasAllFilesAccess else hasLegacyWriteAccess
 
-    fun settingsDestinations(sdkInt: Int): List<SettingsDestination> =
-        if (sdkInt >= ANDROID_R) {
-            listOf(
-                SettingsDestination.AppAllFilesAccess,
-                SettingsDestination.AllFilesAccess,
-                SettingsDestination.AppDetails,
-            )
-        } else {
-            listOf(SettingsDestination.AppDetails)
-        }
+    fun settingsDestinations(sdkInt: Int): List<SettingsDestination> = if (sdkInt >= ANDROID_R) {
+        listOf(
+            SettingsDestination.AppAllFilesAccess,
+            SettingsDestination.AllFilesAccess,
+            SettingsDestination.AppDetails,
+        )
+    } else {
+        listOf(SettingsDestination.AppDetails)
+    }
 
     /** Execute [action] only after the permission decision succeeds. */
     inline fun runIfGranted(
@@ -62,24 +61,23 @@ object RimeStoragePermissionPolicy {
  * the manifest keeps legacy external-storage behavior enabled for those releases.
  */
 object RimeStoragePermission {
-    fun isGranted(context: Context = appContext): Boolean =
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            RimeStoragePermissionPolicy.isGranted(
-                sdkInt = Build.VERSION.SDK_INT,
-                hasAllFilesAccess = Environment.isExternalStorageManager(),
-                hasLegacyWriteAccess = false,
-            )
-        } else {
-            RimeStoragePermissionPolicy.isGranted(
-                sdkInt = Build.VERSION.SDK_INT,
-                hasAllFilesAccess = false,
-                hasLegacyWriteAccess =
-                    ContextCompat.checkSelfPermission(
-                        context,
-                        Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                    ) == PackageManager.PERMISSION_GRANTED,
-            )
-        }
+    fun isGranted(context: Context = appContext): Boolean = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+        RimeStoragePermissionPolicy.isGranted(
+            sdkInt = Build.VERSION.SDK_INT,
+            hasAllFilesAccess = Environment.isExternalStorageManager(),
+            hasLegacyWriteAccess = false,
+        )
+    } else {
+        RimeStoragePermissionPolicy.isGranted(
+            sdkInt = Build.VERSION.SDK_INT,
+            hasAllFilesAccess = false,
+            hasLegacyWriteAccess =
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            ) == PackageManager.PERMISSION_GRANTED,
+        )
+    }
 
     inline fun runIfGranted(
         context: Context = appContext,

@@ -33,7 +33,9 @@ enum class SetupPage {
                 } else {
                     R.string.setup__storage_permission_denied
                 }
+
             Enable -> R.string.setup__enable_ime_hint
+
             Select -> R.string.setup__select_ime_hint
         },
     )

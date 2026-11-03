@@ -70,8 +70,8 @@ class StrokeState(initial: List<HandwritingStroke> = emptyList()) {
     companion object {
         fun decode(raw: String?): StrokeState {
             if (raw.isNullOrBlank()) return StrokeState()
-            val strokes = raw.split('|').mapNotNull stroke@ { encodedStroke ->
-                val points = encodedStroke.split(';').mapNotNull point@ { encodedPoint ->
+            val strokes = raw.split('|').mapNotNull stroke@{ encodedStroke ->
+                val points = encodedStroke.split(';').mapNotNull point@{ encodedPoint ->
                     val fields = encodedPoint.split(',')
                     if (fields.size != 3) return@point null
                     val x = fields[0].toFloatOrNull()?.takeIf { it in 0f..1f } ?: return@point null

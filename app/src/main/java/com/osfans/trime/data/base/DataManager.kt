@@ -37,7 +37,6 @@ object DataManager {
           - schema: jaroomaji
     """
 
-
     private val lock = ReentrantLock()
 
     private val json by lazy { Json }

@@ -8,10 +8,10 @@ import android.app.AlertDialog
 import android.graphics.Point
 import android.os.Build
 import android.text.InputType
+import android.view.Gravity
 import android.view.View
 import android.view.WindowInsets
 import android.view.inputmethod.EditorInfo
-import android.view.Gravity
 import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.LinearLayout
@@ -27,13 +27,13 @@ import com.osfans.trime.ime.broadcast.InputBroadcastReceiver
 import com.osfans.trime.ime.core.TrimeInputMethodService
 import com.osfans.trime.ime.keyboard.KeyboardPrefs.isLandscapeMode
 import com.osfans.trime.ime.popup.PopupDelegate
-import com.osfans.trime.ime.window.BoardWindow
-import com.osfans.trime.ime.window.ResidentWindow
 import com.osfans.trime.ime.unified.HandwritingWindow
 import com.osfans.trime.ime.unified.UnifiedInputMode
 import com.osfans.trime.ime.unified.UnifiedModeCatalog
 import com.osfans.trime.ime.unified.UnifiedModeController
+import com.osfans.trime.ime.window.BoardWindow
 import com.osfans.trime.ime.window.BoardWindowManager
+import com.osfans.trime.ime.window.ResidentWindow
 import com.osfans.trime.util.isLandscape
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow

@@ -27,6 +27,8 @@ import com.osfans.trime.ime.core.TrimeInputMethodService
 import com.osfans.trime.ime.dialog.EnabledSchemaPickerDialog
 import com.osfans.trime.ime.switches.SwitchOptionWindow
 import com.osfans.trime.ime.symbol.LiquidWindow
+import com.osfans.trime.ime.unified.UnifiedInputMode
+import com.osfans.trime.ime.unified.UnifiedModeController
 import com.osfans.trime.ime.window.BoardWindowManager
 import com.osfans.trime.ui.main.settings.ColorPickerDialog
 import com.osfans.trime.ui.main.settings.SoundEffectPickerDialog
@@ -36,8 +38,6 @@ import com.osfans.trime.util.InputMethodUtils
 import com.osfans.trime.util.buildIntentFromAction
 import com.osfans.trime.util.buildIntentFromArgument
 import com.osfans.trime.util.customFormatDateTime
-import com.osfans.trime.ime.unified.UnifiedInputMode
-import com.osfans.trime.ime.unified.UnifiedModeController
 import com.osfans.trime.util.isAsciiPrintable
 import com.osfans.trime.util.toast
 import kotlinx.coroutines.launch

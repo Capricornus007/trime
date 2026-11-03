@@ -60,8 +60,7 @@ object RimeDataSync {
         }
     }
 
-    fun isStorageAvailable(): Boolean =
-        RimeStoragePermission.isGranted() && (!usesExternalSync() || hasExternalAccess())
+    fun isStorageAvailable(): Boolean = RimeStoragePermission.isGranted() && (!usesExternalSync() || hasExternalAccess())
 
     /**
      * Whether the user finished the storage-mode setup step.

@@ -88,6 +88,7 @@ class UnifiedModeController(
             InputType.TYPE_CLASS_PHONE,
             InputType.TYPE_CLASS_DATETIME,
             -> "number"
+
             InputType.TYPE_CLASS_TEXT -> when (info.inputType and InputType.TYPE_MASK_VARIATION) {
                 InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS,
                 InputType.TYPE_TEXT_VARIATION_PASSWORD,
@@ -95,13 +96,14 @@ class UnifiedModeController(
                 InputType.TYPE_TEXT_VARIATION_WEB_EMAIL_ADDRESS,
                 InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD,
                 -> ".ascii"
+
                 else -> null
             }
+
             else -> null
         }
     }
 
-    private fun isUserUnlocked(): Boolean =
-        Build.VERSION.SDK_INT < Build.VERSION_CODES.N ||
-            service.getSystemService(UserManager::class.java).isUserUnlocked
+    private fun isUserUnlocked(): Boolean = Build.VERSION.SDK_INT < Build.VERSION_CODES.N ||
+        service.getSystemService(UserManager::class.java).isUserUnlocked
 }

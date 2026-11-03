@@ -14,8 +14,8 @@ import android.widget.Button
 import android.widget.HorizontalScrollView
 import android.widget.LinearLayout
 import android.widget.TextView
-import com.osfans.trime.TrimeApplication
 import com.osfans.trime.R
+import com.osfans.trime.TrimeApplication
 import com.osfans.trime.ime.core.TrimeInputMethodService
 import com.osfans.trime.ime.keyboard.KeyboardWindow
 import com.osfans.trime.ime.window.BoardWindow
@@ -119,15 +119,18 @@ class HandwritingWindow(di: DI) :
     private fun createActions(): View = LinearLayout(context).apply {
         orientation = LinearLayout.HORIZONTAL
         gravity = Gravity.CENTER
-        addView(button(R.string.handwriting_undo) {
-            modelManager.invalidateInk()
-            if (canvas.state.undo()) {
-                persistStrokes()
-                canvas.invalidate()
-                clearRecognitionResult()
-                recognize()
-            }
-        }, weighted())
+        addView(
+            button(R.string.handwriting_undo) {
+                modelManager.invalidateInk()
+                if (canvas.state.undo()) {
+                    persistStrokes()
+                    canvas.invalidate()
+                    clearRecognitionResult()
+                    recognize()
+                }
+            },
+            weighted(),
+        )
         addView(button(R.string.handwriting_clear) { clearInk() }, weighted())
         addView(button(R.string.handwriting_recognize) { recognize() }, weighted())
         addView(button(R.string.space) { service.commitText(" ") }, weighted())
@@ -234,17 +237,19 @@ class HandwritingWindow(di: DI) :
         if (!::candidates.isInitialized) return
         candidates.removeAllViews()
         values.forEach { candidate ->
-            candidates.addView(Button(context).apply {
-                text = candidate
-                contentDescription = context.getString(R.string.commit_handwriting_candidate, candidate)
-                setOnClickListener {
-                    val committed = HandwritingCandidateCommitPolicy.select(candidate, strokeState)
-                        ?: return@setOnClickListener
-                    modelManager.invalidateInk()
-                    service.commitText(committed)
-                    clearInk()
-                }
-            })
+            candidates.addView(
+                Button(context).apply {
+                    text = candidate
+                    contentDescription = context.getString(R.string.commit_handwriting_candidate, candidate)
+                    setOnClickListener {
+                        val committed = HandwritingCandidateCommitPolicy.select(candidate, strokeState)
+                            ?: return@setOnClickListener
+                        modelManager.invalidateInk()
+                        service.commitText(committed)
+                        clearInk()
+                    }
+                },
+            )
         }
     }
 
@@ -276,7 +281,6 @@ class HandwritingWindow(di: DI) :
         modelManager.close()
     }
 
-    private fun isUserUnlocked(): Boolean =
-        Build.VERSION.SDK_INT < Build.VERSION_CODES.N ||
-            service.getSystemService(UserManager::class.java).isUserUnlocked
+    private fun isUserUnlocked(): Boolean = Build.VERSION.SDK_INT < Build.VERSION_CODES.N ||
+        service.getSystemService(UserManager::class.java).isUserUnlocked
 }
