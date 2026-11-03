@@ -115,18 +115,33 @@ class ThemeGoldenTest :
 
                 Then("color schemes and preset keys are decoded") {
                     theme.presetColorSchemes.size shouldBe 37
-                    theme.presetKeys.size shouldBe 106
+                    // 106 個上游 preset 加 26 個九鍵選字母（t9_pick_a…z，2026-10-27 搬自
+                    // trime-9key-config）。數量守死，漏一個或改名都要紅。
+                    theme.presetKeys.size shouldBe 132
                     val brightnessDown = theme.presetKeys.getValue("BRIGHTNESS_DOWN")
                     brightnessDown.label shouldBe "亮度-"
                     brightnessDown.send shouldBe "BRIGHTNESS_DOWN"
+
+                    // 選字母鍵靠 command 做事、send 只是佔位鍵名；實作讀的是 command 加
+                    // option，所以這兩個欄位一旦漂走，九鍵手勢會靜默失靈。
+                    theme.presetKeys.keys.count { it.startsWith("t9_pick_") } shouldBe 26
+                    val pickA = theme.presetKeys.getValue("t9_pick_a")
+                    pickA.command shouldBe "t9_pick_letter"
+                    pickA.option shouldBe "a"
+                    pickA.label shouldBe "a"
+                    // 佔位鍵名必須和其他 command 型 preset 一樣用大寫平台鍵名，
+                    // 小寫 function 在 Android 與 rime 兩張表都查不到。
+                    pickA.send shouldBe "FUNCTION"
                 }
 
-                Then("all 18 plain keyboards are decoded with their keys") {
-                    theme.presetKeyboards.size shouldBe 18
+                Then("all 19 plain keyboards are decoded with their keys") {
+                    // 18 個上游佈局加九鍵的 t9_pinyin（id 跟方案名一致，選方案時自動配對）。
+                    theme.presetKeyboards.size shouldBe 19
                     theme.presetKeyboards shouldContainKey "default"
                     theme.presetKeyboards shouldContainKey "qwerty0"
                     theme.presetKeyboards shouldContainKey "cangjie5"
                     theme.presetKeyboards shouldContainKey "array30"
+                    theme.presetKeyboards shouldContainKey "t9_pinyin"
 
                     val default = theme.presetKeyboards.getValue("default")
                     default.name shouldBe "預設40鍵"
