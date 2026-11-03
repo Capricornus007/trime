@@ -940,32 +940,32 @@ preset_keys:
   set_theme_ink: { label: 切换到ink主题, send: FUNCTION, command: set_theme, option: "ink" } #空参数为刷新主题
   # trime-9key：九宮格精確選字母（搬自 lida0407）。數字鍵左滑／原地長按／右滑
   # 分別送出該鍵左／中／右字母（四字母鍵加上滑），處理見 t9_pick_letter。
-  t9_pick_a: {label: a, send: function, command: t9_pick_letter, option: a}
-  t9_pick_b: {label: b, send: function, command: t9_pick_letter, option: b}
-  t9_pick_c: {label: c, send: function, command: t9_pick_letter, option: c}
-  t9_pick_d: {label: d, send: function, command: t9_pick_letter, option: d}
-  t9_pick_e: {label: e, send: function, command: t9_pick_letter, option: e}
-  t9_pick_f: {label: f, send: function, command: t9_pick_letter, option: f}
-  t9_pick_g: {label: g, send: function, command: t9_pick_letter, option: g}
-  t9_pick_h: {label: h, send: function, command: t9_pick_letter, option: h}
-  t9_pick_i: {label: i, send: function, command: t9_pick_letter, option: i}
-  t9_pick_j: {label: j, send: function, command: t9_pick_letter, option: j}
-  t9_pick_k: {label: k, send: function, command: t9_pick_letter, option: k}
-  t9_pick_l: {label: l, send: function, command: t9_pick_letter, option: l}
-  t9_pick_m: {label: m, send: function, command: t9_pick_letter, option: m}
-  t9_pick_n: {label: n, send: function, command: t9_pick_letter, option: n}
-  t9_pick_o: {label: o, send: function, command: t9_pick_letter, option: o}
-  t9_pick_p: {label: p, send: function, command: t9_pick_letter, option: p}
-  t9_pick_q: {label: q, send: function, command: t9_pick_letter, option: q}
-  t9_pick_r: {label: r, send: function, command: t9_pick_letter, option: r}
-  t9_pick_s: {label: s, send: function, command: t9_pick_letter, option: s}
-  t9_pick_t: {label: t, send: function, command: t9_pick_letter, option: t}
-  t9_pick_u: {label: u, send: function, command: t9_pick_letter, option: u}
-  t9_pick_v: {label: v, send: function, command: t9_pick_letter, option: v}
-  t9_pick_w: {label: w, send: function, command: t9_pick_letter, option: w}
-  t9_pick_x: {label: x, send: function, command: t9_pick_letter, option: x}
-  t9_pick_y: {label: y, send: function, command: t9_pick_letter, option: y}
-  t9_pick_z: {label: z, send: function, command: t9_pick_letter, option: z}
+  t9_pick_a: {label: a, send: FUNCTION, command: t9_pick_letter, option: a}
+  t9_pick_b: {label: b, send: FUNCTION, command: t9_pick_letter, option: b}
+  t9_pick_c: {label: c, send: FUNCTION, command: t9_pick_letter, option: c}
+  t9_pick_d: {label: d, send: FUNCTION, command: t9_pick_letter, option: d}
+  t9_pick_e: {label: e, send: FUNCTION, command: t9_pick_letter, option: e}
+  t9_pick_f: {label: f, send: FUNCTION, command: t9_pick_letter, option: f}
+  t9_pick_g: {label: g, send: FUNCTION, command: t9_pick_letter, option: g}
+  t9_pick_h: {label: h, send: FUNCTION, command: t9_pick_letter, option: h}
+  t9_pick_i: {label: i, send: FUNCTION, command: t9_pick_letter, option: i}
+  t9_pick_j: {label: j, send: FUNCTION, command: t9_pick_letter, option: j}
+  t9_pick_k: {label: k, send: FUNCTION, command: t9_pick_letter, option: k}
+  t9_pick_l: {label: l, send: FUNCTION, command: t9_pick_letter, option: l}
+  t9_pick_m: {label: m, send: FUNCTION, command: t9_pick_letter, option: m}
+  t9_pick_n: {label: n, send: FUNCTION, command: t9_pick_letter, option: n}
+  t9_pick_o: {label: o, send: FUNCTION, command: t9_pick_letter, option: o}
+  t9_pick_p: {label: p, send: FUNCTION, command: t9_pick_letter, option: p}
+  t9_pick_q: {label: q, send: FUNCTION, command: t9_pick_letter, option: q}
+  t9_pick_r: {label: r, send: FUNCTION, command: t9_pick_letter, option: r}
+  t9_pick_s: {label: s, send: FUNCTION, command: t9_pick_letter, option: s}
+  t9_pick_t: {label: t, send: FUNCTION, command: t9_pick_letter, option: t}
+  t9_pick_u: {label: u, send: FUNCTION, command: t9_pick_letter, option: u}
+  t9_pick_v: {label: v, send: FUNCTION, command: t9_pick_letter, option: v}
+  t9_pick_w: {label: w, send: FUNCTION, command: t9_pick_letter, option: w}
+  t9_pick_x: {label: x, send: FUNCTION, command: t9_pick_letter, option: x}
+  t9_pick_y: {label: y, send: FUNCTION, command: t9_pick_letter, option: y}
+  t9_pick_z: {label: z, send: FUNCTION, command: t9_pick_letter, option: z}
   # trime設定
   IME_switch: { label: 🌐, send: LANGUAGE_SWITCH } #彈出對話框選擇輸入法
   IME_last: { label: 上一輸入法, send: LANGUAGE_SWITCH, select: .last } #直接切換到上一輸入法
