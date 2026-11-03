@@ -5,6 +5,7 @@
 package com.osfans.trime.ime.unified
 
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.floats.plusOrMinus
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 
@@ -20,10 +21,14 @@ class HandwritingStateTest :
             val restored = StrokeState.decode(state.encode())
             restored.strokes.size shouldBe 2
             restored.strokes.first().last().timeMillis shouldBe 12L
-            restored.scaled(200, 100).first().last().run {
-                x shouldBe 100f
-                y shouldBe 60f
-            }
+            // scaled() 是純 float 乘法（0.6f * 100f 就是 60.000004f），畫布只要
+            // 1/1000 px，寫死位元相等會把 float 表示誤差當幾何 bug 報。座標仍要
+            // 真的按比例放大，所以留容差而不是刪掉斷言。
+            val scaled = restored.scaled(200, 100).first().last()
+            scaled.x shouldBe (100f plusOrMinus 0.001f)
+            scaled.y shouldBe (60f plusOrMinus 0.001f)
+            // 這支測試的名字承諾的是時間戳：resize 之後時間仍要跟著點走。
+            scaled.timeMillis shouldBe 12L
             restored.undo() shouldBe true
             restored.strokes.size shouldBe 1
             restored.undo() shouldBe true
