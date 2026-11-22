@@ -5,6 +5,7 @@
 
 package com.osfans.trime.ui.main
 
+import android.content.Context
 import android.os.Parcelable
 import androidx.navigation.NavController
 import androidx.navigation.createGraph
@@ -65,8 +66,10 @@ sealed class NavigationRoute : Parcelable {
     data object License : NavigationRoute()
 
     companion object {
-        fun createGraph(controller: NavController) = controller.createGraph(Main) {
-            val ctx = controller.context
+        // 不用 controller.context：那是 navigation 庫內部取得 Context 的途徑，lint 的
+        // LibraryGroup 規則只准同庫呼叫；Activity 本身就是 Context，直接傳進來。
+        fun createGraph(controller: NavController, context: Context) = controller.createGraph(Main) {
+            val ctx = context
 
             fragment<MainFragment, Main> {
                 label = ctx.getString(R.string.trime_app_name)

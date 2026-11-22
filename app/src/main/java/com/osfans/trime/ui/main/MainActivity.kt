@@ -110,7 +110,7 @@ class MainActivity : AppCompatActivity() {
         // because navController would change toolbar title, we need to control it by ourselves
         setupToolbarMenu(binding.mainToolbar.toolbar.menu)
         navController = binding.navHostFragment.getFragment<NavHostFragment>().navController
-        navController.graph = NavigationRoute.createGraph(navController)
+        navController.graph = NavigationRoute.createGraph(navController, this)
         binding.mainToolbar.toolbar.setNavigationOnClickListener {
             // prevent navigate up when child fragment has enabled `OnBackPressedCallback`
             if (onBackPressedDispatcher.hasEnabledCallbacks()) {

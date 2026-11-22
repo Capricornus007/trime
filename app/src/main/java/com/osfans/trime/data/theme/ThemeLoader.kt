@@ -252,9 +252,13 @@ object ThemeLoader {
         }
     }
 
+    // 不用 File.toPath()：那要 API 26（本包 minSdk 24）。
+
     /** Whether this file really lives in [root]: `..` and absolute ids are escapes. */
     private fun File.isInside(root: File): Boolean = runCatching {
-        canonicalFile.toPath().startsWith(root.canonicalFile.toPath())
+        val self = canonicalFile.path
+        val base = root.canonicalFile.path.trimEnd('/')
+        self == base || self.startsWith("$base/")
     }.getOrDefault(false)
 
     /**
