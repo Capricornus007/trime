@@ -62,9 +62,11 @@ add_subdirectory(OpenCC)
 # OpenCC's data/ builds dictionaries by running opencc_dict, an Android
 # executable that cannot run on the build host. Dictionaries are generated
 # by a host build instead (see OpenCCDataPlugin), so exclude data/ here.
-set_property(
-  DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/OpenCC/data"
-  PROPERTY EXCLUDE_FROM_ALL TRUE)
+if(EXISTS "${CMAKE_CURRENT_BINARY_DIR}/OpenCC/data")
+  set_property(
+    DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/OpenCC/data"
+    PROPERTY EXCLUDE_FROM_ALL TRUE)
+endif()
 include(OpenccWorkarounds)
 
 set(X11Keysym "${CMAKE_SOURCE_DIR}/librime/include")
