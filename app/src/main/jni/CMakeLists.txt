@@ -17,23 +17,23 @@ option(BUILD_TESTING "" OFF)
 
 include(Boost)
 
-option(WITH_GFLAGS "Use gflags" OFF)
-option(WITH_GTEST "Use googletest" OFF)
-# ⚠️ glog 的 WITH_UNWIND **不是布林**，是字串驅動 `none|unwind|libunwind`
-#   （glog CMakeLists.txt:43 `set (WITH_UNWIND libunwind CACHE STRING …)`），而且只有值
-#   正好等於 `none` 時它才會 `CMAKE_DISABLE_FIND_PACKAGE_Unwind ON`（同檔 51-53 行）。
-#   原本這裡寫 `option(WITH_UNWIND … OFF)` ⇒ 快取值變成字串 "OFF"：既不等於 none、
-#   也不是合法驅動，glog 照樣去找 Unwind。NDK r27 僥倖找不到，換到 **r30 就找到了**
-#   `toolchains/llvm/prebuilt/linux-x86_64/lib/libunwind.so`（宿主那顆），於是被當成
-#   glog 的 INTERFACE 依賴塞進 aarch64 連結：
-#   `ld.lld: error: …/libunwind.so is incompatible with aarch64linux`
-#   （t9-ime run 39722307748 實測，紅在 build_grammar／rime-octagram 那批可執行檔）。
-#   Android 的 _Unwind_* 由 libc 提供，glog 關掉外部 unwinder 只是不出 crash stack trace，
-#   不影響 rime 執行。FORCE 是要蓋掉本機 .cxx 可能殘留的舊快取值。（t9-ime 搬入）
-set(WITH_UNWIND none CACHE STRING "glog 的 unwind 驅動（Android 一律 none）" FORCE)
-add_subdirectory(librime/deps/glog)
-target_compile_options(
-  glog_internal PRIVATE "-ffile-prefix-map=${CMAKE_CURRENT_SOURCE_DIR}=.")
+option(ENABLE_LOGGING "Enable logging with spdlog library" ON)
+
+# 上游 fd21b63485 把 native logging 从 glog 迁到 spdlog；隔壁 bump 的
+# librime f71eac9a 已移除 deps/glog submodule，旧 add_subdirectory 会报
+# "source ... is not an existing directory"。spdlog 由 librime 拥有并静态
+# 链进 rime-static；以下选项照上游设定。
+if(ENABLE_LOGGING)
+  set(SPDLOG_BUILD_SHARED OFF CACHE BOOL "" FORCE)
+  set(SPDLOG_BUILD_PIC ON CACHE BOOL "" FORCE)
+  set(SPDLOG_BUILD_EXAMPLE OFF CACHE BOOL "" FORCE)
+  set(SPDLOG_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+  set(SPDLOG_INSTALL OFF CACHE BOOL "" FORCE)
+  set(SPDLOG_FMT_EXTERNAL OFF CACHE BOOL "" FORCE)
+  add_subdirectory(librime/deps/spdlog EXCLUDE_FROM_ALL)
+  target_compile_options(
+    spdlog PRIVATE "-ffile-prefix-map=${CMAKE_CURRENT_SOURCE_DIR}=.")
+endif()
 
 option(YAML_CPP_BUILD_TOOLS "" OFF)
 option(YAML_CPP_BUILD_TESTS "" OFF)
